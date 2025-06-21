@@ -17,6 +17,7 @@ import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { cn } from "@/lib/utils";
 import { fromDate, getLocalTimeZone } from "@internationalized/date";
+import { RainbowButton } from "@/components/magicui/rainbow-button";
 
 /* -------------------------------------------------------------------------- */
 /*                Schema and helper type for React Hook Form                 */
@@ -305,7 +306,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
       const answerValue = watchAll[step.name as keyof ChatFormValues];
       renderedConversation.push(
         <ChatBubble key={`${String(step.name)}-a`} side="user">
-          <span className="bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm break-words">
+          <span className="textured-button bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm break-words">
             {getAnswerLabel(step, answerValue)}
           </span>
         </ChatBubble>
@@ -365,7 +366,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   return (
     <Form {...form}>
       <form
-        className="min-w-[600px] px-2"
+        className="min-w-[600px] px-2 pb-12"
         onSubmit={form.handleSubmit(handleFinalSubmit)}
       >
         {renderedConversation}
@@ -406,14 +407,14 @@ function StepInput({
   })();
 
   const commonButton = (
-    <Button
+    <RainbowButton
       type="button"
-      className="mt-4"
+      className="mt-4 rounded-xl"
       onClick={onContinue}
       disabled={isDisabled}
     >
       Assess your claim
-    </Button>
+    </RainbowButton>
   );
 
   if (step.type === "radio" && step.options) {
@@ -484,7 +485,7 @@ function StepInput({
           value={field.value ?? ""}
           onChange={(e) => field.onChange(e.target.value)}
         />
-        {commonButton}
+        <div className="flex justify-center w-full">{commonButton}</div>
       </div>
     );
   }

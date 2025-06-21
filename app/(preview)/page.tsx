@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { MasonryIcon, VercelIcon } from "@/components/icons";
 import Link from "next/link";
 import { useChat } from "@ai-sdk/react";
+import Image from "next/image";
 import {
   ScreeningChat,
   type ChatFormValues,
@@ -39,6 +40,12 @@ export default function Home() {
           ref={messagesContainerRef}
           className="flex flex-col mt-24 h-full items-center overflow-y-scroll"
         >
+          <Image
+            src="/logo.webp"
+            alt="Know Your Rights"
+            width={80}
+            height={80}
+          />
           <h1 className="text-2xl font-bold leading-none">Know Your Rights</h1>
           <p className="text-zinc-500 dark:text-zinc-400">
             You don&apos;t need to know the law to know your rights.
