@@ -189,6 +189,8 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [filteredDescription, setFilteredDescription] = useState<string>('');
+  const [isProcessingDescription, setIsProcessingDescription] = useState(false);
+  const [showFilteringResults, setShowFilteringResults] = useState(false);
 
   const saveDataToFile = async (data: ScreeningFormValues) => {
     setIsSaving(true);
@@ -221,8 +223,42 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
     }
   };
 
+  const processIssueDescription = async (description: string) => {
+    setIsProcessingDescription(true);
+    try {
+      const response = await fetch('/api/save-screening', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...answers,
+          issue_description: description,
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.filteredDescription) {
+        setFilteredDescription(result.filteredDescription);
+        setShowFilteringResults(true);
+      }
+    } catch (error) {
+      console.error('Error processing description:', error);
+    } finally {
+      setIsProcessingDescription(false);
+    }
+  };
+
   const handleAnswer = (name: keyof ScreeningFormValues, value: any) => {
     setAnswers((prev) => ({ ...prev, [name]: value }));
+
+    // If this is the issue description step, show processing option
+    if (name === 'issue_description') {
+      setShowFilteringResults(false); // Reset for new description
+      // Don't advance to next step automatically for issue description
+      return;
+    }
 
     if (currentStep + 1 < screeningSteps.length) {
       setCurrentStep((prev) => prev + 1);
@@ -274,6 +310,34 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
           </span>
         </ChatBubble>
       );
+
+      // Show filtering results immediately after issue description
+      if (step.name === 'issue_description' && showFilteringResults && filteredDescription) {
+        renderedConversation.push(
+          <ChatBubble key={`${step.name}-filtering`} side="assistant">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h4 className="font-medium text-sm mb-2">Content Filtering Applied:</h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="font-medium text-red-600 dark:text-red-400">Original:</span>
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">
+                    "{String(answerValue)}"
+                  </p>
+                </div>
+                <div>
+                  <span className="font-medium text-green-600 dark:text-green-400">Filtered (Bias Removed):</span>
+                  <p className="text-gray-800 dark:text-gray-200 mt-1">
+                    "{filteredDescription}"
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Personal information and potentially biased details have been removed to ensure fair processing.
+                </p>
+              </div>
+            </div>
+          </ChatBubble>
+        );
+      }
     } else if (index === currentStep && !showSummary) {
       // Current question – show interactive form
       renderedConversation.push(
@@ -281,9 +345,40 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
           <StepInput
             step={step}
             onSubmit={(val) => handleAnswer(step.name, val)}
+            onProcessDescription={step.name === 'issue_description' ? processIssueDescription : undefined}
+            isProcessingDescription={isProcessingDescription}
+            showFilteringResults={showFilteringResults}
           />
         </ChatBubble>
       );
+
+      // Show filtering results for current step if available
+      if (step.name === 'issue_description' && showFilteringResults && filteredDescription && answers.issue_description) {
+        renderedConversation.push(
+          <ChatBubble key={`${step.name}-filtering-current`} side="assistant">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h4 className="font-medium text-sm mb-2">Content Filtering Applied:</h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="font-medium text-red-600 dark:text-red-400">Original:</span>
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">
+                    "{String(answers.issue_description)}"
+                  </p>
+                </div>
+                <div>
+                  <span className="font-medium text-green-600 dark:text-green-400">Filtered (Bias Removed):</span>
+                  <p className="text-gray-800 dark:text-gray-200 mt-1">
+                    "{filteredDescription}"
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Personal information and potentially biased details have been removed to ensure fair processing.
+                </p>
+              </div>
+            </div>
+          </ChatBubble>
+        );
+      }
     }
   });
 
@@ -301,30 +396,6 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
               </li>
             ))}
           </ul>
-          
-          {/* Show filtered description if available */}
-          {filteredDescription && answers.issue_description && (
-            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <h4 className="font-medium text-sm mb-2">Content Filtering Applied:</h4>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium text-red-600 dark:text-red-400">Original:</span>
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">
-                    "{answers.issue_description}"
-                  </p>
-                </div>
-                <div>
-                  <span className="font-medium text-green-600 dark:text-green-400">Filtered (Bias Removed):</span>
-                  <p className="text-gray-800 dark:text-gray-200 mt-1">
-                    "{filteredDescription}"
-                  </p>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Personal information and potentially biased details have been removed to ensure fair processing.
-                </p>
-              </div>
-            </div>
-          )}
           
           {!chatStarted && (
             <Button
@@ -363,9 +434,15 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
 function StepInput({
   step,
   onSubmit,
+  onProcessDescription,
+  isProcessingDescription,
+  showFilteringResults,
 }: {
   step: Step;
   onSubmit: (value: any) => void;
+  onProcessDescription?: (description: string) => void;
+  isProcessingDescription: boolean;
+  showFilteringResults: boolean;
 }) {
   const [localValue, setLocalValue] = useState<any>(
     step.type === "radio" ? "" : step.type === "date" ? null : ""
@@ -378,6 +455,16 @@ function StepInput({
       return () => clearTimeout(timer);
     }
   }, [localValue]);
+
+  // For textarea, also update the answers state so filtering can show current input
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setLocalValue(value);
+    // Also update the answers state immediately for textarea
+    if (step.name === 'issue_description') {
+      onSubmit(value);
+    }
+  };
 
   const isDisabled = (() => {
     if (step.type === "radio") return !localValue;
@@ -456,9 +543,29 @@ function StepInput({
           placeholder="Describe the issue..."
           className="min-h-24 text-base"
           value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
+          onChange={handleTextareaChange}
         />
-        {commonButton}
+        <div className="flex gap-2">
+          {onProcessDescription && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onProcessDescription(localValue)}
+              disabled={isProcessingDescription || !localValue.trim()}
+              className="flex-1"
+            >
+              {isProcessingDescription ? 'Processing...' : 'Process & Filter Content'}
+            </Button>
+          )}
+          <Button
+            type="button"
+            onClick={() => onSubmit(localValue)}
+            disabled={isDisabled}
+            className="flex-1"
+          >
+            Continue
+          </Button>
+        </div>
       </div>
     );
   }
