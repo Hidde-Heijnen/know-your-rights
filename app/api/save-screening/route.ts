@@ -27,35 +27,20 @@ export async function POST(request: NextRequest) {
       try {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-        const prompt = `You are a content filtering assistant for a UK consumer rights legal system. Your task is to extract ONLY the relevant technical/legal issue information from a user's description while removing personal information and potentially biased details.
+        const prompt = `You are a legal assistant helping to filter potentially biased or personal information from user descriptions of legal issues.
 
-CONTEXT FROM PREVIOUS QUESTIONS:
-- Purchase in UK: ${context.purchase_uk}
-- Acting for personal purposes: ${context.acting_personal}
-- Seller acting for business: ${context.seller_trader}
-- Receive date: ${context.receive_date}
-- Contract type: ${context.contract_main}
-- Contract arrangement: ${context.contract_type}
-- Purchased at auction: ${context.auction}
-- Purchase method: ${context.purchase_method}
+Context from previous answers:
+- Eligibility: ${eligibility_check}
+- Contract main: ${contract_main}
+- Contract type: ${contract_type}
+- Purchase method: ${purchase_method}
+- Receive date: ${receive_date}
 
-Original Description: "${description}"
-
-Instructions:
-- Extract ONLY the core technical/legal problem or issue
-- Remove personal information (names, locations, specific product details like colors, brands, etc.)
-- Remove subjective opinions, emotions, or potentially biased language
-- Remove irrelevant details that don't relate to the actual problem
-- Keep only factual, objective information about what went wrong
-- Focus on the functional/technical aspects of the issue
-- Consider the context (contract type, purchase method, etc.) when categorizing the issue
-- Format output as: "[Contract Type], [Specific Issue Category], [Technical Problem]"
-
-Examples based on context:
-- Context: Contract type: Tangible goods, Purchase method: Online → Input: "My red iPhone 14 from Apple Store in London is broken and I'm really upset about it" → Output: "Tangible goods, mobile phone, is not functioning properly"
-- Context: Contract type: Digital content, Purchase method: Online → Input: "The tax software I bought online is outdated and doesn't work properly" → Output: "Digital content, software, is not functioning properly and outdated"
-- Context: Contract type: A service, Purchase method: In person → Input: "The cleaning service I hired is terrible and they didn't show up" → Output: "A service, cleaning service, service not provided as agreed"
-- Context: Contract type: Tangible goods, Purchase method: Off-premises → Input: "The white MacBook Pro from John's store is overheating and shutting down" → Output: "Tangible goods, computer, is overheating and shutting down"
+Please filter the following issue description to remove:
+1. Personal identifying information (names, addresses, phone numbers, etc.)
+2. Potentially biased language or subjective opinions
+3. Emotional language that could affect impartial processing
+4. Unnecessary details that don't relate to the core legal issue
 
 Keep only the factual, objective details relevant to the legal claim.
 
