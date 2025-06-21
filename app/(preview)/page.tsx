@@ -12,6 +12,7 @@ import {
   ScreeningChat,
   type ChatFormValues,
 } from "@/components/screening-chat";
+import { AuroraText } from "@/components/magicui/aurora-text";
 
 export default function Home() {
   const { messages, handleSubmit, input, setInput, append } = useChat();
@@ -40,16 +41,23 @@ export default function Home() {
           ref={messagesContainerRef}
           className="flex flex-col mt-24 h-full items-center overflow-y-scroll"
         >
-          <Image
-            src="/logo.webp"
-            alt="Know Your Rights"
-            width={80}
-            height={80}
-          />
-          <h1 className="text-2xl font-bold leading-none">Know Your Rights</h1>
-          <p className="text-zinc-500 dark:text-zinc-400">
-            You don&apos;t need to know the law to know your rights.
-          </p>
+          <div className="flex flex-col items-center gap-2 mb-12">
+            <Image
+              src="/logo.webp"
+              alt="Know Your Rights"
+              width={80}
+              height={80}
+            />
+            <h1 className="text-2xl font-bold leading-none">
+              Know Your{" "}
+              <AuroraText className="italic" colors={["#dba502", "#2C5FC9"]}>
+                Rights
+              </AuroraText>
+            </h1>
+            <p className="text-zinc-500 dark:text-zinc-400">
+              You don&apos;t need to know the law to know your rights.
+            </p>
+          </div>
           <ScreeningChat
             onComplete={(values) => {
               setScreeningAnswers(values);
