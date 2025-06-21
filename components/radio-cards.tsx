@@ -24,6 +24,7 @@ export interface RadioCardsProps
   labelClassName?: string;
   legendClassName?: string;
   optionLabelsClassName?: string;
+  direction?: "row" | "column";
 }
 
 const RadioCards = React.forwardRef<
@@ -43,6 +44,7 @@ const RadioCards = React.forwardRef<
       labelClassName,
       legendClassName,
       optionLabelsClassName,
+      direction = "row",
       ...props
     },
     ref
@@ -73,7 +75,8 @@ const RadioCards = React.forwardRef<
           <RadioGroup
             ref={ref}
             className={cn(
-              "-space-x-px textured-button flex gap-0 rounded-md shadow-xs",
+              "flex gap-2 items-end",
+              direction === "column" ? "flex-col" : "flex-row",
               radioGroupClassName
             )}
             {...props}
@@ -82,7 +85,8 @@ const RadioCards = React.forwardRef<
               <Label
                 key={option.value}
                 className={cn(
-                  "has-data-[state=checked]:textured-button text-nowrap relative flex h-9 px-2 flex-1 cursor-pointer flex-col items-center justify-center gap-3 border border-input bg-accent text-center font-medium text-sm outline-none transition-[color,box-shadow] first:rounded-s-md last:rounded-e-md focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 has-data-[state=checked]:z-10 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-primary/90 has-data-[state=checked]:text-primary-foreground has-data-disabled:opacity-50",
+                  "has-data-[state=checked]:textured-button text-nowrap relative flex h-8 px-3 w-fit cursor-pointer flex-col items-center justify-center gap-3 border border-input bg-accent text-center font-medium text-sm outline-none transition-[color,box-shadow] rounded-md focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 has-data-[state=checked]:z-10 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-primary/90 has-data-[state=checked]:text-primary-foreground has-data-disabled:opacity-50",
+                  direction === "row" && "flex-1",
                   labelClassName
                 )}
               >

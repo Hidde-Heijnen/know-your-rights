@@ -18,8 +18,6 @@ import { Textarea } from "./ui/textarea";
 import { cn } from "@/lib/utils";
 import { fromDate, getLocalTimeZone } from "@internationalized/date";
 
-import type { ScreeningFormValues } from "./screening-form";
-
 /* -------------------------------------------------------------------------- */
 /*                Schema and helper type for React Hook Form                 */
 /* -------------------------------------------------------------------------- */
@@ -38,7 +36,7 @@ const ScreeningSchema = z.object({
   issue_description: z.string().optional(),
 });
 
-type ChatFormValues = z.infer<typeof ScreeningSchema>;
+export type ChatFormValues = z.infer<typeof ScreeningSchema>;
 
 type RHFField<T extends keyof ChatFormValues> = ControllerRenderProps<
   ChatFormValues,
@@ -88,9 +86,7 @@ const createOptionsList = (
 /*                         Data describing the question flow                  */
 /* -------------------------------------------------------------------------- */
 
-interface BaseStep<
-  T extends keyof ScreeningFormValues = keyof ScreeningFormValues
-> {
+interface BaseStep<T extends keyof ChatFormValues = keyof ChatFormValues> {
   name: T;
   question: string;
   type: "radio" | "date" | "textarea";
@@ -207,7 +203,7 @@ function ChatBubble({
 /* -------------------------------------------------------------------------- */
 
 interface ScreeningChatProps {
-  onComplete: (values: ScreeningFormValues) => void;
+  onComplete: (values: ChatFormValues) => void;
 }
 
 export function ScreeningChat({ onComplete }: ScreeningChatProps) {
@@ -233,7 +229,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   function handleFinalSubmit(values: ChatFormValues) {
     // Log the final answers
     console.log("Screening form result →", values);
-    onComplete(values as ScreeningFormValues);
+    onComplete(values);
   }
 
   /* -------------------------- render helpers -------------------------- */
@@ -255,16 +251,16 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   screeningSteps.forEach((step, index) => {
     // Question bubble (assistant)
     renderedConversation.push(
-      <ChatBubble key={`${step.name}-q`} side="assistant">
+      <ChatBubble key={`${String(step.name)}-q`} side="assistant">
         {step.question}
       </ChatBubble>
     );
 
     if (index < currentStep) {
       // Already answered – show value bubble
-      const answerValue = watchAll[step.name];
+      const answerValue = watchAll[step.name as keyof ChatFormValues];
       renderedConversation.push(
-        <ChatBubble key={`${step.name}-a`} side="user">
+        <ChatBubble key={`${String(step.name)}-a`} side="user">
           <span className="bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm break-words">
             {getAnswerLabel(step, answerValue)}
           </span>
@@ -273,10 +269,10 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
     } else if (index === currentStep && !showSummary) {
       // Current question – show interactive form using RHF field
       renderedConversation.push(
-        <ChatBubble key={`${step.name}-form`} side="user">
+        <ChatBubble key={`${String(step.name)}-form`} side="user">
           <FormField
-            control={form.control as any}
-            name={step.name as any}
+            control={form.control}
+            name={step.name as keyof ChatFormValues}
             render={({ field }) => (
               <StepInput
                 step={step}
@@ -298,9 +294,12 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
           <h3 className="font-semibold">Summary of your answers</h3>
           <ul className="list-disc list-inside space-y-1 text-sm">
             {screeningSteps.map((step) => (
-              <li key={step.name as string}>
+              <li key={String(step.name)}>
                 <span className="font-medium">{step.question}:</span>{" "}
-                {getAnswerLabel(step, watchAll[step.name])}
+                {getAnswerLabel(
+                  step,
+                  watchAll[step.name as keyof ChatFormValues]
+                )}
               </li>
             ))}
           </ul>
@@ -334,13 +333,15 @@ function StepInput({
   field: any;
   onContinue: () => void;
 }) {
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
   // Helper to call continue when appropriate.
   useEffect(() => {
-    if (step.type === "radio" && field.value) {
+    if ((step.type === "radio" || step.type === "date") && field.value) {
       const t = setTimeout(onContinue, 150);
       return () => clearTimeout(t);
     }
-  }, [field.value]);
+  }, [field.value, onContinue, step.type]);
 
   const isDisabled = (() => {
     if (step.type === "radio") return !field.value;
@@ -362,6 +363,9 @@ function StepInput({
   );
 
   if (step.type === "radio" && step.options) {
+    const shouldUseColumn =
+      step.name === "contract_main" || step.name === "contract_type";
+
     return (
       <RadioCards
         value={field.value ?? ""}
@@ -369,6 +373,7 @@ function StepInput({
         options={step.options}
         legend=""
         className="min-w-32"
+        direction={shouldUseColumn ? "column" : "row"}
       />
     );
   }
@@ -376,7 +381,7 @@ function StepInput({
   if (step.type === "date") {
     return (
       <div className="flex flex-col gap-2">
-        <Popover>
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -399,9 +404,11 @@ function StepInput({
                 value={
                   field.value ? fromDate(field.value, getLocalTimeZone()) : null
                 }
-                onChange={(date) =>
-                  field.onChange(date ? date.toDate(getLocalTimeZone()) : null)
-                }
+                onChange={(date) => {
+                  const newDate = date ? date.toDate(getLocalTimeZone()) : null;
+                  field.onChange(newDate);
+                  setIsPopoverOpen(false);
+                }}
                 isDateUnavailable={(date) => {
                   const jsDate = date.toDate(getLocalTimeZone());
                   return jsDate > new Date() || jsDate < new Date("1900-01-01");
@@ -410,7 +417,6 @@ function StepInput({
             )}
           </PopoverContent>
         </Popover>
-        {commonButton}
       </div>
     );
   }

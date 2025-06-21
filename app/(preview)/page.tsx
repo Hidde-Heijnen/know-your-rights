@@ -7,8 +7,10 @@ import { motion } from "framer-motion";
 import { MasonryIcon, VercelIcon } from "@/components/icons";
 import Link from "next/link";
 import { useChat } from "@ai-sdk/react";
-import { ScreeningChat } from "@/components/screening-chat";
-import type { ScreeningFormValues } from "@/components/screening-form";
+import {
+  ScreeningChat,
+  type ChatFormValues,
+} from "@/components/screening-chat";
 
 export default function Home() {
   const { messages, handleSubmit, input, setInput, append } = useChat();
@@ -18,7 +20,7 @@ export default function Home() {
     useScrollToBottom<HTMLDivElement>();
 
   const [screeningAnswers, setScreeningAnswers] =
-    useState<ScreeningFormValues | null>(null);
+    useState<ChatFormValues | null>(null);
 
   const screeningComplete = screeningAnswers !== null;
 
@@ -31,11 +33,11 @@ export default function Home() {
   // ];
 
   return (
-    <div className="flex flex-row justify-center pb-20 h-dvh bg-white dark:bg-zinc-900">
-      <div className="flex flex-col justify-between gap-4">
+    <div className="flex flex-row justify-center w-full">
+      <div className="flex flex-col justify-between gap-4 max-w-[1000px]">
         <div
           ref={messagesContainerRef}
-          className="flex flex-col mt-24 h-full w-dvw items-center overflow-y-scroll"
+          className="flex flex-col mt-24 h-full items-center overflow-y-scroll"
         >
           <h1 className="text-2xl font-bold leading-none">Know Your Rights</h1>
           <p className="text-zinc-500 dark:text-zinc-400">
