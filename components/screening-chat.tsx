@@ -85,7 +85,7 @@ const createOptionsList = (
 
 interface BaseStep<T extends keyof ChatFormValues = keyof ChatFormValues> {
   name: T;
-  question: string;
+  question: string | BotMessageContent;
   type: "radio" | "date" | "textarea";
   options?: { value: string; label: string }[]; // only for radio
 }
@@ -95,20 +95,27 @@ type Step = BaseStep;
 const screeningSteps: Step[] = [
   {
     name: "eligibility_check",
-    question:
-      "Please confirm: Did you purchase something in the UK, for personal (non-business) use, from a business or public body (not a private individual), and it was NOT bought at a public auction you could attend in person?",
+    question: {
+      type: "formatted",
+      content: {
+        bold: "Please confirm:",
+        bullets: [
+          "You purchased something in the UK",
+          "For personal (non-business) use",
+          "From a business or public body (not a private individual)",
+          "It was NOT bought at a public auction you could attend in person",
+        ],
+      },
+    },
     type: "radio",
     options: createOptionsList(["yes", "no"], "yesNo"),
   },
   {
-    name: "receive_date",
-    question:
-      "When did you receive (or were due to receive) the goods, digital content or service?",
-    type: "date",
-  },
-  {
     name: "contract_main",
-    question: "What is the contract mainly about?",
+    question: {
+      type: "text",
+      content: "What is the contract mainly about?",
+    },
     type: "radio",
     options: createOptionsList(
       ["goods", "digital", "mix", "service"],
@@ -117,7 +124,10 @@ const screeningSteps: Step[] = [
   },
   {
     name: "contract_type",
-    question: "Which best describes the contract?",
+    question: {
+      type: "text",
+      content: "Which best describes the contract?",
+    },
     type: "radio",
     options: createOptionsList(
       ["transfer", "hire_purchase", "hire", "one_off"],
@@ -125,8 +135,20 @@ const screeningSteps: Step[] = [
     ),
   },
   {
+    name: "receive_date",
+    question: {
+      type: "text",
+      content:
+        "When did you receive (or were due to receive) the goods, digital content or service?",
+    },
+    type: "date",
+  },
+  {
     name: "purchase_method",
-    question: "How did you buy?",
+    question: {
+      type: "text",
+      content: "How did you buy?",
+    },
     type: "radio",
     options: createOptionsList(
       ["in_person", "online", "off_premises"],
@@ -135,7 +157,10 @@ const screeningSteps: Step[] = [
   },
   {
     name: "issue_description",
-    question: "Very briefly, what has gone wrong?",
+    question: {
+      type: "text",
+      content: "Very briefly, what has gone wrong?",
+    },
     type: "textarea",
   },
 ];
@@ -143,6 +168,42 @@ const screeningSteps: Step[] = [
 /* -------------------------------------------------------------------------- */
 /*                            Helper components                               */
 /* -------------------------------------------------------------------------- */
+
+interface BotMessageContent {
+  type: "text" | "formatted";
+  content:
+    | string
+    | {
+        bold?: string;
+        bullets?: string[];
+        text?: string;
+      };
+}
+
+function BotMessage({ content }: { content: BotMessageContent }) {
+  if (content.type === "text") {
+    return <span>{content.content as string}</span>;
+  }
+
+  if (content.type === "formatted" && typeof content.content === "object") {
+    const { bold, bullets, text } = content.content;
+    return (
+      <div className="flex flex-col gap-2">
+        {bold && <span className="font-bold">{bold}</span>}
+        {bullets && bullets.length > 0 && (
+          <ul className="list-disc list-inside space-y-1 ml-2">
+            {bullets.map((bullet, index) => (
+              <li key={index}>{bullet}</li>
+            ))}
+          </ul>
+        )}
+        {text && <span>{text}</span>}
+      </div>
+    );
+  }
+
+  return <span>{String(content.content)}</span>;
+}
 
 function ChatBubble({
   side,
@@ -231,7 +292,11 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
     // Question bubble (assistant)
     renderedConversation.push(
       <ChatBubble key={`${String(step.name)}-q`} side="assistant">
-        {step.question}
+        {typeof step.question === "string" ? (
+          step.question
+        ) : (
+          <BotMessage content={step.question} />
+        )}
       </ChatBubble>
     );
 
@@ -274,7 +339,14 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
           <ul className="list-disc list-inside space-y-1 text-sm">
             {screeningSteps.map((step) => (
               <li key={String(step.name)}>
-                <span className="font-medium">{step.question}:</span>{" "}
+                <span className="font-medium">
+                  {typeof step.question === "string" ? (
+                    step.question
+                  ) : (
+                    <BotMessage content={step.question} />
+                  )}
+                  :
+                </span>{" "}
                 {getAnswerLabel(
                   step,
                   watchAll[step.name as keyof ChatFormValues]
