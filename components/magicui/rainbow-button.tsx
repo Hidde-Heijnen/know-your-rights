@@ -50,7 +50,7 @@ const RainbowButton = React.forwardRef<HTMLButtonElement, RainbowButtonProps>(
       <Comp
         data-slot="button"
         className={cn(
-          "!h-12 !w-56 !text-lg !font-normal",
+          "!h-12 !text-lg !font-normal",
           rainbowButtonVariants({ variant, size, className })
         )}
         ref={ref}

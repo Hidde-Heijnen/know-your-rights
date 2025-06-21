@@ -888,11 +888,11 @@ function StepInput({
   const commonButton = (
     <RainbowButton
       type="button"
-      className="mt-4 rounded-xl"
+      className="mt-4 rounded-xl !w-72"
       onClick={onContinue}
       disabled={isDisabled || isProcessingDescription}
     >
-      {isProcessingDescription ? "Processing..." : "Continue"}
+      {isProcessingDescription ? "Processing..." : "Assess your claim"}
     </RainbowButton>
   );
 
@@ -959,20 +959,20 @@ function StepInput({
 
   if (step.type === "textarea") {
     return (
-      <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col !w-72">
         <Textarea
           placeholder="Describe the issue..."
           className="min-h-24 text-base"
           value={field.value ?? ""}
           onChange={(e) => field.onChange(e.target.value)}
         />
-        <div className="flex justify-center w-full">{commonButton}</div>
+        <div className="flex justify-end w-full">{commonButton}</div>
 
         {/* Show continue button when filtering results are displayed */}
         {showFilteringResults && step.name === "issue_description" && (
           <Button
             type="button"
-            className="mt-2"
+            className="mt-2 ml-auto"
             onClick={onContinue}
             variant="outline"
           >
