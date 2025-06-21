@@ -1,0 +1,56 @@
+[
+  {
+    "step": 1,
+    "section": "Section 1(1)",
+    "reasoning": [
+      "A lawyer's first step is to determine if the Consumer Rights Act 2015 is the correct piece of legislation for the client's problem[cite: 4667, 4671].",
+      "Section 1(1) of the Act confirms that it applies to agreements between a trader and a consumer for the supply of goods[cite: 44, 47]."
+    ]
+  },
+  {
+    "step": 2,
+    "section": "Section 2(2) and 2(3)",
+    "reasoning": [
+      "The lawyer must then establish that the parties involved fit the legal definitions required by the Act[cite: 4667, 4671].",
+      "Section 2(3) defines a 'consumer' as an individual acting for purposes outside their trade or profession[cite: 67].",
+      "Section 2(2) defines a 'trader' as a person acting for purposes related to their trade or business[cite: 66]."
+    ]
+  },
+  {
+    "step": 3,
+    "section": "Section 2(8)",
+    "reasoning": [
+      "The lawyer needs to classify the item purchased to ensure it falls within the Act's scope[cite: 4667, 4671].",
+      "Section 2(8) defines 'goods' as any tangible moveable items, which includes a travel adapter[cite: 81]."
+    ]
+  },
+  {
+    "step": 4,
+    "section": "Section 9(1), 9(2), and 9(3)",
+    "reasoning": [
+      "The lawyer must identify the specific statutory right that has been breached[cite: 4667, 4671].",
+      "Section 9(1) implies a term into the contract that goods must be of 'satisfactory quality'[cite: 176].",
+      "Sections 9(2) and 9(3) clarify that satisfactory quality includes fitness for purpose and freedom from defects, which the non-working adapter clearly breaches[cite: 177, 181, 183, 185]."
+    ]
+  },
+  {
+    "step": 5,
+    "section": "Section 19(3), 20(1), 20(5), and 22(3)",
+    "reasoning": [
+      "After establishing a breach, the lawyer must determine the available remedies[cite: 4667, 4671].",
+      "Section 19(3) grants the consumer a 'short-term right to reject' for goods that do not conform to the contract[cite: 339, 340].",
+      "Section 20(1) and 20(5) outline that this right is exercised by the consumer indicating their rejection to the trader[cite: 383, 388].",
+      "Section 22(3) specifies that this right must be exercised within 30 days of receiving the goods[cite: 461]."
+    ]
+  },
+  {
+    "step": 6,
+    "section": "Section 20(7)(a), 20(10), and 20(15)",
+    "reasoning": [
+      "The final step is to confirm the specific outcome of the remedy, in this case, the refund[cite: 4667, 4671].",
+      "Section 20(7)(a) mandates that upon rejection, the trader has a duty to provide a refund[cite: 391, 392].",
+      "Section 20(10) specifies that the consumer is entitled to receive back the same amount of money they paid[cite: 400].",
+      "Section 20(15) requires the refund to be processed without undue delay and within 14 days of the trader agreeing to it[cite: 406]."
+    ]
+  }
+]

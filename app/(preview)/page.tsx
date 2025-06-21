@@ -46,7 +46,7 @@ export default function Home() {
       <div className="flex flex-col justify-between gap-4 w-fit overflow-x-visible px-4">
         <div
           ref={messagesContainerRef}
-          className="flex flex-col mt-24 mb-72 h-full items-center overflow-y-scroll"
+          className="flex flex-col mt-24 mb-72 h-full items-center"
         >
           <div className="mb-6 text-center flex flex-col items-center">
             <Image
@@ -86,10 +86,6 @@ export default function Home() {
           <ScreeningChat
             onComplete={(values) => {
               setScreeningAnswers(values);
-              append({
-                role: "system",
-                content: `User screening answers: ${JSON.stringify(values)}`,
-              });
             }}
           />
 
@@ -108,7 +104,7 @@ export default function Home() {
           );
         })}
 
-        {screeningComplete && (
+        {/* {screeningComplete && (
           <form
             className="flex flex-col gap-2 relative items-center"
             onSubmit={handleSubmit}
@@ -123,7 +119,7 @@ export default function Home() {
               }}
             />
           </form>
-        )}
+        )} */}
       </div>
     </div>
   );
