@@ -13,6 +13,8 @@ import {
   type ChatFormValues,
 } from "@/components/screening-chat";
 import { AuroraText } from "@/components/magicui/aurora-text";
+import { CheckCircle } from "lucide-react";
+import { Shield } from "lucide-react";
 
 export default function Home() {
   const { messages, handleSubmit, input, setInput, append } = useChat();
@@ -34,6 +36,11 @@ export default function Home() {
   //   },
   // ];
 
+  const trustIndicators = [
+    { icon: Shield, text: "UK Legal Compliance" },
+    { icon: CheckCircle, text: "Free Confidential Advice" },
+  ];
+
   return (
     <div className="flex flex-row justify-center w-full">
       <div className="flex flex-col justify-between gap-4 w-fit overflow-x-visible px-4">
@@ -41,23 +48,41 @@ export default function Home() {
           ref={messagesContainerRef}
           className="flex flex-col mt-24 h-full items-center overflow-y-scroll"
         >
-          <div className="flex flex-col items-center gap-2 mb-12">
+          <div className="mb-6 text-center flex flex-col items-center">
             <Image
               src="/logo.webp"
               alt="Know Your Rights"
-              width={80}
-              height={80}
+              width={100}
+              height={100}
             />
-            <h1 className="text-2xl font-bold leading-none">
+            <h1 className="text-4xl md:text-5xl font-bold leading-tight">
               Know Your{" "}
               <AuroraText className="italic" colors={["#dba502", "#2C5FC9"]}>
                 Rights
               </AuroraText>
             </h1>
-            <p className="text-zinc-500 dark:text-zinc-400">
-              You don&apos;t need to know the law to know your rights.
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Get instant, personalized legal guidance for consumer rights
+              issues. No legal jargon, just clear answers you can understand.
             </p>
           </div>
+
+          {/* Trust Indicators */}
+          <div className="flex flex-wrap justify-center gap-6 mb-8">
+            {trustIndicators.map((indicator, index) => (
+              <motion.div
+                key={index}
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
+              >
+                <indicator.icon className="w-4 h-4 text-primary" />
+                {indicator.text}
+              </motion.div>
+            ))}
+          </div>
+
           <ScreeningChat
             onComplete={(values) => {
               setScreeningAnswers(values);
