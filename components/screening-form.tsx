@@ -49,6 +49,7 @@ const ScreeningSchema = z.object({
   issue_description: z
     .string()
     .min(5, { message: "Please describe what has gone wrong." }),
+  issue_description_filtered: z.string().optional(),
 });
 
 export type ScreeningFormValues = z.infer<typeof ScreeningSchema>;

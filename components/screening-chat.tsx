@@ -188,6 +188,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   const [chatStarted, setChatStarted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [filteredDescription, setFilteredDescription] = useState<string>('');
 
   const saveDataToFile = async (data: ScreeningFormValues) => {
     setIsSaving(true);
@@ -206,6 +207,10 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
       if (result.success) {
         console.log('Screening data saved successfully:', result.filename);
         setSaveSuccess(true);
+        // Store the filtered description for display
+        if (result.filteredDescription) {
+          setFilteredDescription(result.filteredDescription);
+        }
       } else {
         console.error('Failed to save screening data:', result.message);
       }
@@ -296,6 +301,31 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
               </li>
             ))}
           </ul>
+          
+          {/* Show filtered description if available */}
+          {filteredDescription && answers.issue_description && (
+            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h4 className="font-medium text-sm mb-2">Content Filtering Applied:</h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="font-medium text-red-600 dark:text-red-400">Original:</span>
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">
+                    "{answers.issue_description}"
+                  </p>
+                </div>
+                <div>
+                  <span className="font-medium text-green-600 dark:text-green-400">Filtered (Bias Removed):</span>
+                  <p className="text-gray-800 dark:text-gray-200 mt-1">
+                    "{filteredDescription}"
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Personal information and potentially biased details have been removed to ensure fair processing.
+                </p>
+              </div>
+            </div>
+          )}
+          
           {!chatStarted && (
             <Button
               onClick={() => {
