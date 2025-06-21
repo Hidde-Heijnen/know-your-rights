@@ -1,12 +1,16 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Message } from "@/components/message";
 import { useScrollToBottom } from "@/components/use-scroll-to-bottom";
 import { motion } from "framer-motion";
 import { GitIcon, MasonryIcon, VercelIcon } from "@/components/icons";
 import Link from "next/link";
 import { useChat } from "@ai-sdk/react";
+import {
+  ScreeningForm,
+  type ScreeningFormValues,
+} from "@/components/screening-form";
 
 export default function Home() {
   const { messages, handleSubmit, input, setInput, append } = useChat();
@@ -14,6 +18,43 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
+
+  const [screeningAnswers, setScreeningAnswers] =
+    useState<ScreeningFormValues | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Ensure hydration is complete before showing conditional content
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  // Show loading state during hydration
+  if (!isHydrated) {
+    return (
+      <div className="flex justify-center items-center min-h-dvh">
+        <div className="text-zinc-500">Loading...</div>
+      </div>
+    );
+  }
+
+  // Render the screening form first
+  if (screeningAnswers === null) {
+    return (
+      <div className="flex justify-center items-start pt-10 min-h-dvh">
+        <ScreeningForm
+          onComplete={(values) => {
+            // Store answers locally
+            setScreeningAnswers(values);
+            // Inject them as a system message for context
+            append({
+              role: "system",
+              content: `User screening answers: ${JSON.stringify(values)}`,
+            });
+          }}
+        />
+      </div>
+    );
+  }
 
   const suggestedActions = [
     {
