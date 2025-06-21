@@ -12,6 +12,7 @@
     "@ai-sdk/google": "^1.2.19",
     "@ai-sdk/openai": "^1.0.10",
     "@ai-sdk/react": "^1.2.12",
+    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.1.1",
     "@internationalized/date": "^3.8.2",
     "@radix-ui/react-accordion": "^1.2.11",
