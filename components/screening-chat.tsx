@@ -177,7 +177,7 @@ function ChatBubble({
     <motion.div
       initial={{ y: 5, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className={`flex flex-row gap-4 px-4 mb-4 w-full md:w-[500px] md:px-0 first-of-type:pt-20 ${
+      className={`flex flex-row gap-4 px-4 mb-4 w-full md:px-0 first-of-type:pt-20 ${
         isAssistant ? "" : "justify-end"
       }`}
     >
@@ -313,7 +313,10 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFinalSubmit)}>
+      <form
+        className="min-w-[600px]"
+        onSubmit={form.handleSubmit(handleFinalSubmit)}
+      >
         {renderedConversation}
       </form>
     </Form>
