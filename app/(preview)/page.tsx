@@ -7,8 +7,10 @@ import { motion } from "framer-motion";
 import { MasonryIcon, VercelIcon } from "@/components/icons";
 import Link from "next/link";
 import { useChat } from "@ai-sdk/react";
-import { ScreeningChat } from "@/components/screening-chat";
-import type { ScreeningFormValues } from "@/components/screening-form";
+import {
+  ScreeningChat,
+  type ChatFormValues,
+} from "@/components/screening-chat";
 
 export default function Home() {
   const { messages, handleSubmit, input, setInput, append } = useChat();
@@ -18,8 +20,7 @@ export default function Home() {
     useScrollToBottom<HTMLDivElement>();
 
   const [screeningAnswers, setScreeningAnswers] =
-    useState<ScreeningFormValues | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
+    useState<ChatFormValues | null>(null);
 
   const screeningComplete = screeningAnswers !== null;
 
@@ -108,21 +109,21 @@ export default function Home() {
                     AI SDK
                   </Link>
                 </p>
-              </div>
+        </div>
             </motion.div>
           )}
 
-          {messages.map((message, i) => {
-            return (
-              <Message
-                key={message.id}
-                role={message.role}
-                content={message.content}
-                toolInvocations={message.toolInvocations}
-                reasoningMessages={[]}
-              ></Message>
-            );
-          })}
+        {messages.map((message, i) => {
+          return (
+            <Message
+              key={message.id}
+              role={message.role}
+              content={message.content}
+              toolInvocations={message.toolInvocations}
+              reasoningMessages={[]}
+            ></Message>
+          );
+        })}
 
           <ScreeningChat
             onComplete={(values) => {
