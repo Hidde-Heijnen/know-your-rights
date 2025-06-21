@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, ControllerRenderProps } from "react-hook-form";
 import { z } from "zod";
 
 import {
@@ -11,26 +11,26 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
+import { RadioCards } from "@/components/radio-cards";
 
 /* -------------------------------------------------------------------------- */
 /*                                Zod Schema                                 */
 /* -------------------------------------------------------------------------- */
 const ScreeningSchema = z.object({
-  purchase_uk: z.boolean(),
-  acting_personal: z.boolean(),
-  seller_trader: z.boolean(),
+  purchase_uk: z.enum(["yes", "no"]),
+  acting_personal: z.enum(["yes", "no"]),
+  seller_trader: z.enum(["yes", "no"]),
   receive_date: z.string().min(1, {
     message: "Please select a date.",
   }),
   contract_main: z.enum(["goods", "digital", "service", "mix"]),
   contract_type: z.enum(["one_off", "hire", "hire_purchase", "transfer"]),
-  auction: z.boolean(),
+  auction: z.enum(["yes", "no"]),
   purchase_method: z.enum(["in_person", "online", "off_premises"]),
   issue_description: z
     .string()
@@ -38,6 +38,48 @@ const ScreeningSchema = z.object({
 });
 
 export type ScreeningFormValues = z.infer<typeof ScreeningSchema>;
+
+type FieldRenderProp<T extends keyof ScreeningFormValues> = {
+  field: ControllerRenderProps<ScreeningFormValues, T>;
+};
+
+/* -------------------------------------------------------------------------- */
+/*                              Helper Functions                              */
+/* -------------------------------------------------------------------------- */
+const getOptionLabel = (value: string, context: string): string => {
+  const labelMaps: Record<string, Record<string, string>> = {
+    yesNo: {
+      yes: "Yes",
+      no: "No",
+    },
+    contractMain: {
+      goods: "Tangible goods",
+      digital: "Digital content",
+      service: "A service",
+      mix: "A mix of these",
+    },
+    contractType: {
+      one_off: "One-off sale",
+      hire: "Hire of goods",
+      hire_purchase: "Hire-purchase",
+      transfer: "Transfer for something other than money",
+    },
+    purchaseMethod: {
+      in_person: "In person",
+      online: "Online / distance",
+      off_premises: "Off-premises / doorstep",
+    },
+  };
+
+  return labelMaps[context]?.[value] || value;
+};
+
+const createOptionsList = (values: string[], context: string) => {
+  return values.map((value) => ({
+    value,
+    label: getOptionLabel(value, context),
+  }));
+};
 
 /* -------------------------------------------------------------------------- */
 /*                               Form Component                               */
@@ -54,13 +96,13 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
   const form = useForm<ScreeningFormValues>({
     resolver: zodResolver(ScreeningSchema),
     defaultValues: {
-      purchase_uk: true,
-      acting_personal: true,
-      seller_trader: true,
+      purchase_uk: "yes",
+      acting_personal: "yes",
+      seller_trader: "yes",
       receive_date: "",
       contract_main: "goods",
       contract_type: "one_off",
-      auction: false,
+      auction: "no",
       purchase_method: "in_person",
       issue_description: "",
     },
@@ -74,23 +116,23 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 w-full max-w-lg"
+        className="space-y-6 w-full max-w-2xl mx-auto"
       >
         {/* Question 1 */}
         <FormField
           control={form.control}
           name="purchase_uk"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-              <div className="space-y-0.5 pr-2">
-                <FormLabel>
-                  Did the purchase or contract take place in the United Kingdom?
-                </FormLabel>
-              </div>
+          render={({ field }: FieldRenderProp<"purchase_uk">) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-semibold">
+                Did the purchase or contract take place in the United Kingdom?
+              </FormLabel>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
+                <RadioCards
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  options={createOptionsList(["yes", "no"], "yesNo")}
+                  legend=""
                 />
               </FormControl>
             </FormItem>
@@ -101,17 +143,17 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
         <FormField
           control={form.control}
           name="acting_personal"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-              <div className="space-y-0.5 pr-2">
-                <FormLabel>
-                  Are you acting mainly for personal, non-business purposes?
-                </FormLabel>
-              </div>
+          render={({ field }: FieldRenderProp<"acting_personal">) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-semibold">
+                Are you acting mainly for personal, non-business purposes?
+              </FormLabel>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
+                <RadioCards
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  options={createOptionsList(["yes", "no"], "yesNo")}
+                  legend=""
                 />
               </FormControl>
             </FormItem>
@@ -122,17 +164,17 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
         <FormField
           control={form.control}
           name="seller_trader"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-              <div className="space-y-0.5 pr-2">
-                <FormLabel>
-                  Is the seller or supplier acting for business purposes?
-                </FormLabel>
-              </div>
+          render={({ field }: FieldRenderProp<"seller_trader">) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-semibold">
+                Is the seller or supplier acting for business purposes?
+              </FormLabel>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
+                <RadioCards
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  options={createOptionsList(["yes", "no"], "yesNo")}
+                  legend=""
                 />
               </FormControl>
             </FormItem>
@@ -143,9 +185,9 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
         <FormField
           control={form.control}
           name="receive_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
+          render={({ field }: FieldRenderProp<"receive_date">) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-semibold">
                 When did you receive (or were due to receive) the goods, digital
                 content or service?
               </FormLabel>
@@ -164,40 +206,21 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
         <FormField
           control={form.control}
           name="contract_main"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>What is the contract mainly about?</FormLabel>
+          render={({ field }: FieldRenderProp<"contract_main">) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-semibold">
+                What is the contract mainly about?
+              </FormLabel>
               <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
+                <RadioCards
                   value={field.value}
-                  className="flex flex-col space-y-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="goods" id="goods" />
-                    <label htmlFor="goods" className="text-sm">
-                      Tangible goods
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="digital" id="digital" />
-                    <label htmlFor="digital" className="text-sm">
-                      Digital content
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="service" id="service" />
-                    <label htmlFor="service" className="text-sm">
-                      A service
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="mix" id="mix" />
-                    <label htmlFor="mix" className="text-sm">
-                      A mix of these
-                    </label>
-                  </div>
-                </RadioGroup>
+                  onValueChange={field.onChange}
+                  options={createOptionsList(
+                    ["goods", "digital", "service", "mix"],
+                    "contractMain"
+                  )}
+                  legend=""
+                />
               </FormControl>
             </FormItem>
           )}
@@ -207,40 +230,21 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
         <FormField
           control={form.control}
           name="contract_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Which best describes the contract?</FormLabel>
+          render={({ field }: FieldRenderProp<"contract_type">) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-semibold">
+                Which best describes the contract?
+              </FormLabel>
               <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
+                <RadioCards
                   value={field.value}
-                  className="flex flex-col space-y-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="one_off" id="one_off" />
-                    <label htmlFor="one_off" className="text-sm">
-                      One-off sale
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hire" id="hire" />
-                    <label htmlFor="hire" className="text-sm">
-                      Hire of goods
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hire_purchase" id="hire_purchase" />
-                    <label htmlFor="hire_purchase" className="text-sm">
-                      Hire-purchase
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="transfer" id="transfer" />
-                    <label htmlFor="transfer" className="text-sm">
-                      Transfer for something other than money
-                    </label>
-                  </div>
-                </RadioGroup>
+                  onValueChange={field.onChange}
+                  options={createOptionsList(
+                    ["one_off", "hire", "hire_purchase", "transfer"],
+                    "contractType"
+                  )}
+                  legend=""
+                />
               </FormControl>
             </FormItem>
           )}
@@ -250,18 +254,18 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
         <FormField
           control={form.control}
           name="auction"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-              <div className="space-y-0.5 pr-2">
-                <FormLabel>
-                  Was the item bought at a public auction you could attend in
-                  person?
-                </FormLabel>
-              </div>
+          render={({ field }: FieldRenderProp<"auction">) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-semibold">
+                Was the item bought at a public auction you could attend in
+                person?
+              </FormLabel>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
+                <RadioCards
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  options={createOptionsList(["yes", "no"], "yesNo")}
+                  legend=""
                 />
               </FormControl>
             </FormItem>
@@ -272,34 +276,21 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
         <FormField
           control={form.control}
           name="purchase_method"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>How did you buy?</FormLabel>
+          render={({ field }: FieldRenderProp<"purchase_method">) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-semibold">
+                How did you buy?
+              </FormLabel>
               <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
+                <RadioCards
                   value={field.value}
-                  className="flex flex-col space-y-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="in_person" id="in_person" />
-                    <label htmlFor="in_person" className="text-sm">
-                      In person
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="online" id="online" />
-                    <label htmlFor="online" className="text-sm">
-                      Online / distance
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="off_premises" id="off_premises" />
-                    <label htmlFor="off_premises" className="text-sm">
-                      Off-premises / doorstep
-                    </label>
-                  </div>
-                </RadioGroup>
+                  onValueChange={field.onChange}
+                  options={createOptionsList(
+                    ["in_person", "online", "off_premises"],
+                    "purchaseMethod"
+                  )}
+                  legend=""
+                />
               </FormControl>
             </FormItem>
           )}
@@ -309,13 +300,15 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
         <FormField
           control={form.control}
           name="issue_description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Very briefly, what has gone wrong?</FormLabel>
+          render={({ field }: FieldRenderProp<"issue_description">) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-semibold">
+                Very briefly, what has gone wrong?
+              </FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Describe the issue..."
-                  className="min-h-24"
+                  className="min-h-24 text-base"
                   {...field}
                 />
               </FormControl>
@@ -327,7 +320,7 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
           )}
         />
 
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full h-12 text-base">
           Continue
         </Button>
       </form>
