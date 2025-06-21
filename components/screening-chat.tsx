@@ -186,6 +186,35 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   const [answers, setAnswers] = useState<Partial<ScreeningFormValues>>({});
   const [showSummary, setShowSummary] = useState(false);
   const [chatStarted, setChatStarted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const saveDataToFile = async (data: ScreeningFormValues) => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    try {
+      const response = await fetch('/api/save-screening', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('Screening data saved successfully:', result.filename);
+        setSaveSuccess(true);
+      } else {
+        console.error('Failed to save screening data:', result.message);
+      }
+    } catch (error) {
+      console.error('Error saving screening data:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleAnswer = (name: keyof ScreeningFormValues, value: any) => {
     setAnswers((prev) => ({ ...prev, [name]: value }));
@@ -196,6 +225,14 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
       // Finished all steps
       setShowSummary(true);
     }
+  };
+
+  const handleComplete = (values: ScreeningFormValues) => {
+    // Save data to file
+    saveDataToFile(values);
+    
+    // Call the original onComplete callback
+    onComplete(values);
   };
 
   /* -------------------------- render helpers -------------------------- */
@@ -263,12 +300,23 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
             <Button
               onClick={() => {
                 setChatStarted(true);
-                onComplete(answers as ScreeningFormValues);
+                handleComplete(answers as ScreeningFormValues);
               }}
               className="self-start"
+              disabled={isSaving}
             >
-              Start chatting
+              {isSaving ? 'Saving data...' : 'Start chatting'}
             </Button>
+          )}
+          {isSaving && (
+            <p className="text-sm text-green-600 dark:text-green-400">
+              Saving your screening data to local file...
+            </p>
+          )}
+          {saveSuccess && (
+            <p className="text-sm text-green-600 dark:text-green-400">
+              ✅ Screening data saved successfully to local file!
+            </p>
           )}
         </div>
       </ChatBubble>
