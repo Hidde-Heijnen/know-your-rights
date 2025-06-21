@@ -125,7 +125,7 @@ const screeningSteps: Step[] = [
     question: "What is the contract mainly about?",
     type: "radio",
     options: createOptionsList(
-      ["goods", "digital", "service", "mix"],
+      ["goods", "digital", "mix", "service"],
       "contractMain"
     ),
   },
@@ -134,7 +134,7 @@ const screeningSteps: Step[] = [
     question: "Which best describes the contract?",
     type: "radio",
     options: createOptionsList(
-      ["one_off", "hire", "hire_purchase", "transfer"],
+      ["transfer", "hire_purchase", "hire", "one_off"],
       "contractType"
     ),
   },
@@ -177,7 +177,7 @@ function ChatBubble({
     <motion.div
       initial={{ y: 5, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className={`flex flex-row gap-4 px-4 w-full md:w-[500px] md:px-0 first-of-type:pt-20 ${
+      className={`flex flex-row gap-4 px-4 mb-4 w-full md:w-[500px] md:px-0 first-of-type:pt-20 ${
         isAssistant ? "" : "justify-end"
       }`}
     >
@@ -188,7 +188,7 @@ function ChatBubble({
       )}
 
       <div
-        className={`flex flex-col gap-1 max-w-full ${
+        className={`flex flex-col gap-2 max-w-full ${
           isAssistant ? "text-zinc-800 dark:text-zinc-300" : "items-end w-full"
         }`}
       >
