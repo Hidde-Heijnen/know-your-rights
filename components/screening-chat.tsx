@@ -663,8 +663,8 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
       );
     }
 
-    if (index < currentStep) {
-      // Already answered – show value bubble
+    if (index < currentStep && !showSummary) {
+      // Already answered – show value bubble (only during screening, not in summary)
       const answerValue = watchAll[step.name as keyof ChatFormValues];
       renderedConversation.push(
         <ChatBubble key={`${String(step.name)}-a`} side="user" animate={false}>
@@ -674,11 +674,12 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
         </ChatBubble>
       );
 
-      // Show filtering results immediately after issue description
+      // Show filtering results immediately after issue description (only during screening, not in summary)
       if (
         step.name === "issue_description" &&
         showFilteringResults &&
-        filteredDescription
+        filteredDescription &&
+        !showSummary
       ) {
         renderedConversation.push(
           <ChatBubble key={`${step.name}-filtering`} side="assistant">
@@ -798,64 +799,22 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
     renderedConversation.push(
       <ChatBubble key="summary" side="assistant">
         <div className="flex flex-col gap-4">
-          <h3 className="font-semibold">Summary of your answers</h3>
-          <ul className="list-disc list-inside space-y-1 text-sm">
-            {screeningSteps.map((step) => {
-              // Special handling for issue description to show both original and filtered
-              if (step.name === "issue_description" && filteredDescription) {
-                return (
-                  <li key={String(step.name)}>
-                    <span className="font-medium">
-                      {typeof step.question === "string" ? (
-                        step.question
-                      ) : (
-                        <BotMessage content={step.question} />
-                      )}
-                      :
-                    </span>
-                    <div className="ml-4 mt-2 space-y-2">
-                      <div>
-                        <span className="font-medium text-red-600 dark:text-red-400 text-xs">
-                          Original:
-                        </span>
-                        <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">
-                          &ldquo;
-                          {String(watchAll[step.name as keyof ChatFormValues])}
-                          &rdquo;
-                        </p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-green-600 dark:text-green-400 text-xs">
-                          Filtered (Bias Removed):
-                        </span>
-                        <p className="text-gray-800 dark:text-gray-200 text-xs mt-1">
-                          &ldquo;{filteredDescription}&rdquo;
-                        </p>
-                      </div>
-                    </div>
-                  </li>
-                );
-              }
+          <h3 className="font-semibold">Ready to help with your case</h3>
 
-              // Regular handling for other steps
-              return (
-                <li key={String(step.name)}>
-                  <span className="font-medium">
-                    {typeof step.question === "string" ? (
-                      step.question
-                    ) : (
-                      <BotMessage content={step.question} />
-                    )}
-                    :
-                  </span>{" "}
-                  {getAnswerLabel(
-                    step,
-                    watchAll[step.name as keyof ChatFormValues]
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          {/* Issue description with filtered content */}
+          {filteredDescription && (
+            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Your issue:
+              </div>
+              <div className="text-gray-800 dark:text-gray-200">
+                &ldquo;{filteredDescription}&rdquo;
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                ✓ Content filtered for bias removal
+              </p>
+            </div>
+          )}
 
           <Button type="submit" className="self-start" disabled={isSaving}>
             {isSaving ? "Saving data..." : "Start chatting"}
