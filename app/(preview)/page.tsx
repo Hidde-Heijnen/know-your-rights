@@ -6,7 +6,7 @@ import { useScrollToBottom } from "@/components/use-scroll-to-bottom";
 import { motion } from "framer-motion";
 import { GitIcon, MasonryIcon, VercelIcon } from "@/components/icons";
 import Link from "next/link";
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
 
 export default function Home() {
   const { messages, handleSubmit, input, setInput, append } = useChat();
