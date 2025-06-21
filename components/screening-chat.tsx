@@ -172,6 +172,167 @@ const screeningSteps: Step[] = [
 /*                            Helper components                               */
 /* -------------------------------------------------------------------------- */
 
+interface TypewriterTextProps {
+  text: string;
+  speed?: number;
+  onComplete?: () => void;
+}
+
+function TypewriterText({ text, speed = 20, onComplete }: TypewriterTextProps) {
+  const [displayedText, setDisplayedText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText((prev) => prev + text[currentIndex]);
+        setCurrentIndex((prev) => prev + 1);
+      }, speed);
+
+      return () => clearTimeout(timeout);
+    } else if (currentIndex === text.length && onComplete) {
+      // Small delay after completing the text before calling onComplete
+      const timeout = setTimeout(onComplete, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, text, speed, onComplete]);
+
+  useEffect(() => {
+    // Reset when text changes
+    setDisplayedText("");
+    setCurrentIndex(0);
+  }, [text]);
+
+  return (
+    <span>
+      {displayedText}
+      {currentIndex < text.length && (
+        <motion.span
+          animate={{ opacity: [1, 0] }}
+          transition={{
+            duration: 0.8,
+            repeat: Infinity,
+            repeatType: "reverse",
+          }}
+          className="ml-0.5"
+        >
+          |
+        </motion.span>
+      )}
+    </span>
+  );
+}
+
+interface TypewriterBotMessageProps {
+  content: BotMessageContent;
+  onComplete?: () => void;
+}
+
+function TypewriterBotMessage({
+  content,
+  onComplete,
+}: TypewriterBotMessageProps) {
+  if (content.type === "text") {
+    return (
+      <TypewriterText
+        text={content.content as string}
+        onComplete={onComplete}
+      />
+    );
+  }
+
+  if (content.type === "formatted" && typeof content.content === "object") {
+    const { bold, bullets, text } = content.content;
+    const [boldComplete, setBoldComplete] = useState(false);
+    const [bulletsComplete, setBulletsComplete] = useState(false);
+    const [textComplete, setTextComplete] = useState(false);
+
+    const handleBoldComplete = () => setBoldComplete(true);
+    const handleBulletsComplete = () => setBulletsComplete(true);
+    const handleTextComplete = () => setTextComplete(true);
+
+    useEffect(() => {
+      // Check if all parts are complete
+      const shouldCallComplete =
+        (!bold || boldComplete) &&
+        (!bullets || bullets.length === 0 || bulletsComplete) &&
+        (!text || textComplete);
+
+      if (shouldCallComplete && onComplete) {
+        onComplete();
+      }
+    }, [
+      boldComplete,
+      bulletsComplete,
+      textComplete,
+      bold,
+      bullets,
+      text,
+      onComplete,
+    ]);
+
+    return (
+      <div className="flex flex-col gap-2">
+        {bold && (
+          <span className="font-bold">
+            <TypewriterText text={bold} onComplete={handleBoldComplete} />
+          </span>
+        )}
+        {bullets && bullets.length > 0 && boldComplete && (
+          <TypewriterBulletList
+            bullets={bullets}
+            onComplete={handleBulletsComplete}
+          />
+        )}
+        {text &&
+          (boldComplete || !bold) &&
+          (bulletsComplete || !bullets || bullets.length === 0) && (
+            <TypewriterText text={text} onComplete={handleTextComplete} />
+          )}
+      </div>
+    );
+  }
+
+  return <span>{String(content.content)}</span>;
+}
+
+function TypewriterBulletList({
+  bullets,
+  onComplete,
+}: {
+  bullets: string[];
+  onComplete?: () => void;
+}) {
+  const [currentBullet, setCurrentBullet] = useState(0);
+  const [bulletComplete, setBulletComplete] = useState(false);
+
+  const handleBulletComplete = () => {
+    if (currentBullet < bullets.length - 1) {
+      setCurrentBullet((prev) => prev + 1);
+      setBulletComplete(false);
+    } else {
+      setBulletComplete(true);
+      if (onComplete) {
+        onComplete();
+      }
+    }
+  };
+
+  return (
+    <ul className="list-disc list-inside space-y-1 ml-2">
+      {bullets.slice(0, currentBullet + 1).map((bullet, index) => (
+        <li key={index}>
+          {index === currentBullet ? (
+            <TypewriterText text={bullet} onComplete={handleBulletComplete} />
+          ) : (
+            bullet
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 interface BotMessageContent {
   type: "text" | "formatted";
   content:
@@ -211,19 +372,16 @@ function BotMessage({ content }: { content: BotMessageContent }) {
 function ChatBubble({
   side,
   children,
+  animate = true,
 }: {
   side: "assistant" | "user";
   children: ReactNode;
+  animate?: boolean;
 }) {
   const isAssistant = side === "assistant";
-  return (
-    <motion.div
-      initial={{ y: 5, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className={`flex flex-row gap-4 px-4 mb-4 w-full md:px-0  ${
-        isAssistant ? "" : "justify-end"
-      }`}
-    >
+
+  const content = (
+    <>
       {isAssistant && (
         <div className="size-[24px] flex flex-col justify-center items-center shrink-0 text-zinc-400">
           <BotIcon />
@@ -237,7 +395,36 @@ function ChatBubble({
       >
         {children}
       </div>
-    </motion.div>
+    </>
+  );
+
+  if (animate) {
+    return (
+      <motion.div
+        initial={{ transform: "translateY(20px)", opacity: 0 }}
+        animate={{ transform: "translateY(0px)", opacity: 1 }}
+        transition={{
+          duration: 0.4,
+          ease: "easeOut",
+          opacity: { duration: 0.3 },
+        }}
+        className={`flex flex-row gap-4 px-4 mb-4 w-full md:px-0 ${
+          isAssistant ? "" : "justify-end"
+        }`}
+      >
+        {content}
+      </motion.div>
+    );
+  }
+
+  return (
+    <div
+      className={`flex flex-row gap-4 px-4 mb-4 w-full md:px-0 ${
+        isAssistant ? "" : "justify-end"
+      }`}
+    >
+      {content}
+    </div>
   );
 }
 
@@ -257,6 +444,8 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   const [filteredDescription, setFilteredDescription] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [currentQuestionTypingComplete, setCurrentQuestionTypingComplete] =
+    useState(false);
 
   // ----------------- React Hook Form -----------------
   const form = useForm<ChatFormValues>({
@@ -266,6 +455,17 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
 
   const watchAll = form.watch();
 
+  // Reset typing completion when step changes
+  useEffect(() => {
+    if (currentStep === 0) {
+      // First message: set as complete immediately for input to show
+      setCurrentQuestionTypingComplete(true);
+    } else {
+      // Other messages: reset to false for typewriter effect
+      setCurrentQuestionTypingComplete(false);
+    }
+  }, [currentStep]);
+
   const saveDataToFile = async (data: ChatFormValues) => {
     setIsSaving(true);
     try {
@@ -274,16 +474,16 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
         ...data,
         issue_description_filtered: filteredDescription,
       };
-      
+
       // Convert Date objects to ISO strings for JSON serialization
       if (dataToSend.receive_date instanceof Date) {
         dataToSend.receive_date = dataToSend.receive_date.toISOString();
       }
 
-      const response = await fetch('/api/save-screening', {
-        method: 'POST',
+      const response = await fetch("/api/save-screening", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(dataToSend),
       });
@@ -293,24 +493,34 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         setSaveSuccess(true);
-        console.log('Data saved successfully:', result);
+        console.log("Data saved successfully:", result);
       } else {
-        throw new Error(result.message || 'Failed to save data');
+        throw new Error(result.message || "Failed to save data");
       }
     } catch (error) {
-      console.error('Error saving data:', error);
-      alert(`Error saving data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Error saving data:", error);
+      alert(
+        `Error saving data: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleContinue = async (index: number) => {
+    // Reset typing completion for next question
+    setCurrentQuestionTypingComplete(false);
+
     // If this is the issue description step, process it first
-    if (screeningSteps[index].name === 'issue_description' && watchAll.issue_description) {
+    if (
+      screeningSteps[index].name === "issue_description" &&
+      watchAll.issue_description
+    ) {
       setIsProcessingDescription(true);
       try {
         // Prepare data for API, handling dates properly
@@ -318,46 +528,49 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
           ...watchAll,
           issue_description: watchAll.issue_description,
         };
-        
+
         // Convert Date objects to ISO strings for JSON serialization
         if (dataToSend.receive_date instanceof Date) {
           dataToSend.receive_date = dataToSend.receive_date.toISOString();
         }
 
-        console.log('Sending data to API:', dataToSend);
+        console.log("Sending data to API:", dataToSend);
 
-        const response = await fetch('/api/save-screening', {
-          method: 'POST',
+        const response = await fetch("/api/save-screening", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(dataToSend),
         });
 
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        console.log("Response status:", response.status);
+        console.log(
+          "Response headers:",
+          Object.fromEntries(response.headers.entries())
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const responseText = await response.text();
-        console.log('Response text:', responseText);
+        console.log("Response text:", responseText);
 
         let result;
         try {
           result = JSON.parse(responseText);
         } catch (parseError) {
-          console.error('JSON parse error:', parseError);
-          console.error('Response text that failed to parse:', responseText);
-          throw new Error('Invalid JSON response from server');
+          console.error("JSON parse error:", parseError);
+          console.error("Response text that failed to parse:", responseText);
+          throw new Error("Invalid JSON response from server");
         }
-        
+
         if (result.success && result.filteredDescription) {
           setFilteredDescription(result.filteredDescription);
           setShowFilteringResults(true);
           setIsProcessingDescription(false);
-          
+
           // Show filtering results for 3 seconds, then advance automatically
           setTimeout(() => {
             if (index + 1 < screeningSteps.length) {
@@ -366,13 +579,14 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
               setShowSummary(true);
             }
           }, 3000);
-          
+
           return;
         }
       } catch (error) {
-        console.error('Error processing description:', error);
+        console.error("Error processing description:", error);
         // Show error to user
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
         alert(`Error processing description: ${errorMessage}`);
       } finally {
         setIsProcessingDescription(false);
@@ -389,7 +603,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   function handleFinalSubmit(values: ChatFormValues) {
     // Save data to file
     saveDataToFile(values);
-    
+
     // Log the final answers
     console.log("Screening form result →", values);
     onComplete(values);
@@ -412,22 +626,48 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   const renderedConversation: React.ReactNode[] = [];
 
   screeningSteps.forEach((step, index) => {
-    // Question bubble (assistant)
-    renderedConversation.push(
-      <ChatBubble key={`${String(step.name)}-q`} side="assistant">
-        {typeof step.question === "string" ? (
-          step.question
-        ) : (
-          <BotMessage content={step.question} />
-        )}
-      </ChatBubble>
-    );
+    // Only show questions for steps that are active or completed (progressive reveal)
+    if (index <= currentStep && !showSummary) {
+      // Question bubble (assistant)
+      const isCurrentQuestion = index === currentStep;
+      renderedConversation.push(
+        <ChatBubble key={`${String(step.name)}-q`} side="assistant">
+          {isCurrentQuestion ? (
+            // Current question - skip typing for first message, use typing for others
+            index === 0 ? (
+              // First message: just slide in, no typing
+              typeof step.question === "string" ? (
+                step.question
+              ) : (
+                <BotMessage content={step.question} />
+              )
+            ) : // Subsequent messages: use typewriter effect
+            typeof step.question === "string" ? (
+              <TypewriterText
+                text={step.question}
+                onComplete={() => setCurrentQuestionTypingComplete(true)}
+              />
+            ) : (
+              <TypewriterBotMessage
+                content={step.question}
+                onComplete={() => setCurrentQuestionTypingComplete(true)}
+              />
+            )
+          ) : // Previous questions without typewriter
+          typeof step.question === "string" ? (
+            step.question
+          ) : (
+            <BotMessage content={step.question} />
+          )}
+        </ChatBubble>
+      );
+    }
 
     if (index < currentStep) {
       // Already answered – show value bubble
       const answerValue = watchAll[step.name as keyof ChatFormValues];
       renderedConversation.push(
-        <ChatBubble key={`${String(step.name)}-a`} side="user">
+        <ChatBubble key={`${String(step.name)}-a`} side="user" animate={false}>
           <span className="textured-button bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm break-words">
             {getAnswerLabel(step, answerValue)}
           </span>
@@ -435,26 +675,37 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
       );
 
       // Show filtering results immediately after issue description
-      if (step.name === 'issue_description' && showFilteringResults && filteredDescription) {
+      if (
+        step.name === "issue_description" &&
+        showFilteringResults &&
+        filteredDescription
+      ) {
         renderedConversation.push(
           <ChatBubble key={`${step.name}-filtering`} side="assistant">
             <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <h4 className="font-medium text-sm mb-2">Content Filtering Applied:</h4>
+              <h4 className="font-medium text-sm mb-2">
+                Content Filtering Applied:
+              </h4>
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="font-medium text-red-600 dark:text-red-400">Original:</span>
+                  <span className="font-medium text-red-600 dark:text-red-400">
+                    Original:
+                  </span>
                   <p className="text-gray-600 dark:text-gray-300 mt-1">
                     &ldquo;{String(answerValue)}&rdquo;
                   </p>
                 </div>
                 <div>
-                  <span className="font-medium text-green-600 dark:text-green-400">Filtered (Bias Removed):</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">
+                    Filtered (Bias Removed):
+                  </span>
                   <p className="text-gray-800 dark:text-gray-200 mt-1">
                     &ldquo;{filteredDescription}&rdquo;
                   </p>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Personal information and potentially biased details have been removed to ensure fair processing.
+                  Personal information and potentially biased details have been
+                  removed to ensure fair processing.
                 </p>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
                   Continuing to next step automatically in 3 seconds...
@@ -466,45 +717,70 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
       }
     } else if (index === currentStep && !showSummary) {
       // Current question – show interactive form using RHF field
+      // Always render to reserve space, but make invisible until typing is complete
       renderedConversation.push(
-        <ChatBubble key={`${String(step.name)}-form`} side="user">
-          <FormField
-            control={form.control}
-            name={step.name as keyof ChatFormValues}
-            render={({ field }) => (
-              <StepInput
-                step={step}
-                field={field}
-                onContinue={() => handleContinue(index)}
-                isProcessingDescription={isProcessingDescription}
-                showFilteringResults={showFilteringResults}
-              />
-            )}
-          />
+        <ChatBubble
+          key={`${String(step.name)}-form`}
+          side="user"
+          animate={currentQuestionTypingComplete}
+        >
+          <div
+            className={
+              currentQuestionTypingComplete
+                ? "opacity-100"
+                : "opacity-0 pointer-events-none"
+            }
+          >
+            <FormField
+              control={form.control}
+              name={step.name as keyof ChatFormValues}
+              render={({ field }) => (
+                <StepInput
+                  step={step}
+                  field={field}
+                  onContinue={() => handleContinue(index)}
+                  isProcessingDescription={isProcessingDescription}
+                  showFilteringResults={showFilteringResults}
+                />
+              )}
+            />
+          </div>
         </ChatBubble>
       );
 
       // Show filtering results for current step if available
-      if (step.name === 'issue_description' && showFilteringResults && filteredDescription && watchAll.issue_description) {
+      if (
+        step.name === "issue_description" &&
+        showFilteringResults &&
+        filteredDescription &&
+        watchAll.issue_description
+      ) {
         renderedConversation.push(
           <ChatBubble key={`${step.name}-filtering-current`} side="assistant">
             <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <h4 className="font-medium text-sm mb-2">Content Filtering Applied:</h4>
+              <h4 className="font-medium text-sm mb-2">
+                Content Filtering Applied:
+              </h4>
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="font-medium text-red-600 dark:text-red-400">Original:</span>
+                  <span className="font-medium text-red-600 dark:text-red-400">
+                    Original:
+                  </span>
                   <p className="text-gray-600 dark:text-gray-300 mt-1">
                     &ldquo;{String(watchAll.issue_description)}&rdquo;
                   </p>
                 </div>
                 <div>
-                  <span className="font-medium text-green-600 dark:text-green-400">Filtered (Bias Removed):</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">
+                    Filtered (Bias Removed):
+                  </span>
                   <p className="text-gray-800 dark:text-gray-200 mt-1">
                     &ldquo;{filteredDescription}&rdquo;
                   </p>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Personal information and potentially biased details have been removed to ensure fair processing.
+                  Personal information and potentially biased details have been
+                  removed to ensure fair processing.
                 </p>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
                   Continuing to next step automatically in 3 seconds...
@@ -526,7 +802,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
           <ul className="list-disc list-inside space-y-1 text-sm">
             {screeningSteps.map((step) => {
               // Special handling for issue description to show both original and filtered
-              if (step.name === 'issue_description' && filteredDescription) {
+              if (step.name === "issue_description" && filteredDescription) {
                 return (
                   <li key={String(step.name)}>
                     <span className="font-medium">
@@ -539,13 +815,19 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
                     </span>
                     <div className="ml-4 mt-2 space-y-2">
                       <div>
-                        <span className="font-medium text-red-600 dark:text-red-400 text-xs">Original:</span>
+                        <span className="font-medium text-red-600 dark:text-red-400 text-xs">
+                          Original:
+                        </span>
                         <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">
-                          &ldquo;{String(watchAll[step.name as keyof ChatFormValues])}&rdquo;
+                          &ldquo;
+                          {String(watchAll[step.name as keyof ChatFormValues])}
+                          &rdquo;
                         </p>
                       </div>
                       <div>
-                        <span className="font-medium text-green-600 dark:text-green-400 text-xs">Filtered (Bias Removed):</span>
+                        <span className="font-medium text-green-600 dark:text-green-400 text-xs">
+                          Filtered (Bias Removed):
+                        </span>
                         <p className="text-gray-800 dark:text-gray-200 text-xs mt-1">
                           &ldquo;{filteredDescription}&rdquo;
                         </p>
@@ -554,7 +836,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
                   </li>
                 );
               }
-              
+
               // Regular handling for other steps
               return (
                 <li key={String(step.name)}>
@@ -574,15 +856,11 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
               );
             })}
           </ul>
-          
-          <Button
-            type="submit"
-            className="self-start"
-            disabled={isSaving}
-          >
-            {isSaving ? 'Saving data...' : 'Start chatting'}
+
+          <Button type="submit" className="self-start" disabled={isSaving}>
+            {isSaving ? "Saving data..." : "Start chatting"}
           </Button>
-          
+
           {isSaving && (
             <p className="text-sm text-green-600 dark:text-green-400">
               Saving your screening data to local file...
@@ -601,7 +879,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   return (
     <Form {...form}>
       <form
-        className="min-w-[600px] px-2 pb-12"
+        className="w-[600px] px-2 pb-12"
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit(handleFinalSubmit)(e);
@@ -655,7 +933,7 @@ function StepInput({
       onClick={onContinue}
       disabled={isDisabled || isProcessingDescription}
     >
-      {isProcessingDescription ? 'Processing...' : 'Continue'}
+      {isProcessingDescription ? "Processing..." : "Continue"}
     </RainbowButton>
   );
 
@@ -730,9 +1008,9 @@ function StepInput({
           onChange={(e) => field.onChange(e.target.value)}
         />
         <div className="flex justify-center w-full">{commonButton}</div>
-        
+
         {/* Show continue button when filtering results are displayed */}
-        {showFilteringResults && step.name === 'issue_description' && (
+        {showFilteringResults && step.name === "issue_description" && (
           <Button
             type="button"
             className="mt-2"

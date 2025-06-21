@@ -46,7 +46,7 @@ export default function Home() {
       <div className="flex flex-col justify-between gap-4 w-fit overflow-x-visible px-4">
         <div
           ref={messagesContainerRef}
-          className="flex flex-col mt-24 h-full items-center overflow-y-scroll"
+          className="flex flex-col mt-24 mb-72 h-full items-center overflow-y-scroll"
         >
           <div className="mb-6 text-center flex flex-col items-center">
             <Image
