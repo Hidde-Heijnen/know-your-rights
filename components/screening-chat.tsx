@@ -365,7 +365,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   return (
     <Form {...form}>
       <form
-        className="min-w-[600px]"
+        className="min-w-[600px] px-2"
         onSubmit={form.handleSubmit(handleFinalSubmit)}
       >
         {renderedConversation}
@@ -412,7 +412,7 @@ function StepInput({
       onClick={onContinue}
       disabled={isDisabled}
     >
-      Continue
+      Assess your claim
     </Button>
   );
 
