@@ -3,6 +3,10 @@
 import { useState, useEffect, ReactNode } from "react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
+import { useForm, ControllerRenderProps } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormField, FormControl } from "./ui/form";
 
 import { BotIcon } from "./icons";
 import { RadioCards } from "./radio-cards";
@@ -15,6 +19,31 @@ import { cn } from "@/lib/utils";
 import { fromDate, getLocalTimeZone } from "@internationalized/date";
 
 import type { ScreeningFormValues } from "./screening-form";
+
+/* -------------------------------------------------------------------------- */
+/*                Schema and helper type for React Hook Form                 */
+/* -------------------------------------------------------------------------- */
+
+const ScreeningSchema = z.object({
+  purchase_uk: z.enum(["yes", "no"]).optional(),
+  acting_personal: z.enum(["yes", "no"]).optional(),
+  seller_trader: z.enum(["yes", "no"]).optional(),
+  receive_date: z.date().optional(),
+  contract_main: z.enum(["goods", "digital", "service", "mix"]).optional(),
+  contract_type: z
+    .enum(["one_off", "hire", "hire_purchase", "transfer"])
+    .optional(),
+  auction: z.enum(["yes", "no"]).optional(),
+  purchase_method: z.enum(["in_person", "online", "off_premises"]).optional(),
+  issue_description: z.string().optional(),
+});
+
+type ChatFormValues = z.infer<typeof ScreeningSchema>;
+
+type RHFField<T extends keyof ChatFormValues> = ControllerRenderProps<
+  ChatFormValues,
+  T
+>;
 
 /* -------------------------------------------------------------------------- */
 /*                             Helper definitions                             */
@@ -183,20 +212,29 @@ interface ScreeningChatProps {
 
 export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Partial<ScreeningFormValues>>({});
   const [showSummary, setShowSummary] = useState(false);
-  const [chatStarted, setChatStarted] = useState(false);
 
-  const handleAnswer = (name: keyof ScreeningFormValues, value: any) => {
-    setAnswers((prev) => ({ ...prev, [name]: value }));
+  // ----------------- React Hook Form -----------------
+  const form = useForm<ChatFormValues>({
+    resolver: zodResolver(ScreeningSchema),
+    defaultValues: {},
+  });
 
-    if (currentStep + 1 < screeningSteps.length) {
-      setCurrentStep((prev) => prev + 1);
+  const watchAll = form.watch();
+
+  const handleContinue = (index: number) => {
+    if (index + 1 < screeningSteps.length) {
+      setCurrentStep(index + 1);
     } else {
-      // Finished all steps
       setShowSummary(true);
     }
   };
+
+  function handleFinalSubmit(values: ChatFormValues) {
+    // Log the final answers
+    console.log("Screening form result →", values);
+    onComplete(values as ScreeningFormValues);
+  }
 
   /* -------------------------- render helpers -------------------------- */
 
@@ -224,7 +262,7 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
 
     if (index < currentStep) {
       // Already answered – show value bubble
-      const answerValue = answers[step.name];
+      const answerValue = watchAll[step.name];
       renderedConversation.push(
         <ChatBubble key={`${step.name}-a`} side="user">
           <span className="bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm break-words">
@@ -233,12 +271,19 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
         </ChatBubble>
       );
     } else if (index === currentStep && !showSummary) {
-      // Current question – show interactive form
+      // Current question – show interactive form using RHF field
       renderedConversation.push(
         <ChatBubble key={`${step.name}-form`} side="user">
-          <StepInput
-            step={step}
-            onSubmit={(val) => handleAnswer(step.name, val)}
+          <FormField
+            control={form.control as any}
+            name={step.name as any}
+            render={({ field }) => (
+              <StepInput
+                step={step}
+                field={field}
+                onContinue={() => handleContinue(index)}
+              />
+            )}
           />
         </ChatBubble>
       );
@@ -253,29 +298,27 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
           <h3 className="font-semibold">Summary of your answers</h3>
           <ul className="list-disc list-inside space-y-1 text-sm">
             {screeningSteps.map((step) => (
-              <li key={step.name}>
+              <li key={step.name as string}>
                 <span className="font-medium">{step.question}:</span>{" "}
-                {getAnswerLabel(step, answers[step.name])}
+                {getAnswerLabel(step, watchAll[step.name])}
               </li>
             ))}
           </ul>
-          {!chatStarted && (
-            <Button
-              onClick={() => {
-                setChatStarted(true);
-                onComplete(answers as ScreeningFormValues);
-              }}
-              className="self-start"
-            >
-              Start chatting
-            </Button>
-          )}
+          <Button type="submit" className="self-start">
+            Start chatting
+          </Button>
         </div>
       </ChatBubble>
     );
   }
 
-  return <>{renderedConversation}</>;
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleFinalSubmit)}>
+        {renderedConversation}
+      </form>
+    </Form>
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -284,28 +327,26 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
 
 function StepInput({
   step,
-  onSubmit,
+  field,
+  onContinue,
 }: {
   step: Step;
-  onSubmit: (value: any) => void;
+  field: any;
+  onContinue: () => void;
 }) {
-  const [localValue, setLocalValue] = useState<any>(
-    step.type === "radio" ? "" : step.type === "date" ? null : ""
-  );
-
+  // Helper to call continue when appropriate.
   useEffect(() => {
-    // Auto-submit for radio when value changes
-    if (step.type === "radio" && localValue) {
-      const timer = setTimeout(() => onSubmit(localValue), 150);
-      return () => clearTimeout(timer);
+    if (step.type === "radio" && field.value) {
+      const t = setTimeout(onContinue, 150);
+      return () => clearTimeout(t);
     }
-  }, [localValue]);
+  }, [field.value]);
 
   const isDisabled = (() => {
-    if (step.type === "radio") return !localValue;
-    if (step.type === "date") return !localValue;
+    if (step.type === "radio") return !field.value;
+    if (step.type === "date") return !field.value;
     if (step.type === "textarea")
-      return typeof localValue !== "string" || localValue.trim() === "";
+      return typeof field.value !== "string" || field.value.trim() === "";
     return true;
   })();
 
@@ -313,7 +354,7 @@ function StepInput({
     <Button
       type="button"
       className="mt-4"
-      onClick={() => onSubmit(localValue)}
+      onClick={onContinue}
       disabled={isDisabled}
     >
       Continue
@@ -323,8 +364,8 @@ function StepInput({
   if (step.type === "radio" && step.options) {
     return (
       <RadioCards
-        value={localValue}
-        onValueChange={setLocalValue}
+        value={field.value ?? ""}
+        onValueChange={(val) => field.onChange(val)}
         options={step.options}
         legend=""
         className="min-w-32"
@@ -341,11 +382,11 @@ function StepInput({
               variant="outline"
               className={cn(
                 "w-full pl-3 text-left font-normal justify-between",
-                !localValue && "text-muted-foreground"
+                !field.value && "text-muted-foreground"
               )}
             >
-              {localValue ? (
-                format(localValue, "PPP")
+              {field.value ? (
+                format(field.value, "PPP")
               ) : (
                 <span>Pick a date</span>
               )}
@@ -353,18 +394,20 @@ function StepInput({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              value={
-                localValue ? fromDate(localValue, getLocalTimeZone()) : null
-              }
-              onChange={(date) =>
-                setLocalValue(date ? date.toDate(getLocalTimeZone()) : null)
-              }
-              isDateUnavailable={(date) => {
-                const jsDate = date.toDate(getLocalTimeZone());
-                return jsDate > new Date() || jsDate < new Date("1900-01-01");
-              }}
-            />
+            {typeof window !== "undefined" && (
+              <Calendar
+                value={
+                  field.value ? fromDate(field.value, getLocalTimeZone()) : null
+                }
+                onChange={(date) =>
+                  field.onChange(date ? date.toDate(getLocalTimeZone()) : null)
+                }
+                isDateUnavailable={(date) => {
+                  const jsDate = date.toDate(getLocalTimeZone());
+                  return jsDate > new Date() || jsDate < new Date("1900-01-01");
+                }}
+              />
+            )}
           </PopoverContent>
         </Popover>
         {commonButton}
@@ -378,8 +421,8 @@ function StepInput({
         <Textarea
           placeholder="Describe the issue..."
           className="min-h-24 text-base"
-          value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
+          value={field.value ?? ""}
+          onChange={(e) => field.onChange(e.target.value)}
         />
         {commonButton}
       </div>
