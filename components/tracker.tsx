@@ -52,7 +52,7 @@ export const Tracker = ({
         transition={{ delay: 0.1 }}
       >
         <motion.div
-          className="size-8 text-blue-50 rounded-full flex-shrink-0 flex flex-row justify-center items-center"
+          className="size-8 text-blue-50 rounded-full shrink-0 flex flex-row justify-center items-center"
           initial={{ background: "#f4f4f5" }}
           animate={{
             background: getColorFromProgress({
@@ -91,7 +91,7 @@ export const Tracker = ({
         </div>
 
         <motion.div
-          className="size-8 text-blue-50 rounded-full flex-shrink-0 flex flex-row justify-center items-center"
+          className="size-8 text-blue-50 rounded-full shrink-0 flex flex-row justify-center items-center"
           initial={{ background: "#f4f4f5" }}
           animate={{
             background:
@@ -136,7 +136,7 @@ export const Tracker = ({
           />
         </div>
         <motion.div
-          className="size-8 bg-zinc-100 text-zinc-500 dark:text-zinc-400 rounded-full flex-shrink-0 flex flex-row justify-center items-center"
+          className="size-8 bg-zinc-100 text-zinc-500 dark:text-zinc-400 rounded-full shrink-0 flex flex-row justify-center items-center"
           initial={{
             background: "#f4f4f5",
             color: "#71717a",

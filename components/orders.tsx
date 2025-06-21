@@ -16,7 +16,7 @@ export const Orders = ({ orders }: { orders: any[] }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 * index }}
         >
-          <div className="size-12 bg-zinc-200 flex-shrink-0 rounded-lg">
+          <div className="size-12 bg-zinc-200 shrink-0 rounded-lg">
             <Image
               src={`/${order.image}`}
               alt={order.name}
