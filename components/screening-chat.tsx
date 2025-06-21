@@ -215,8 +215,10 @@ function ChatBubble({
 }) {
   const isAssistant = side === "assistant";
   return (
-    <div
-      className={`flex flex-row gap-4 px-4 mb-4 w-full md:px-0 ${
+    <motion.div
+      initial={{ y: 5, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className={`flex flex-row gap-4 px-4 mb-4 w-full md:px-0 first-of-type:pt-20 ${
         isAssistant ? "" : "justify-end"
       }`}
     >
@@ -233,7 +235,7 @@ function ChatBubble({
       >
         {children}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -288,107 +290,76 @@ export function ScreeningChat({ onComplete }: ScreeningChatProps) {
   const renderedConversation: React.ReactNode[] = [];
 
   screeningSteps.forEach((step, index) => {
-    // Only show questions up to current step + 1 (to include the current question)
-    if (index <= currentStep) {
-      // Question bubble (assistant) with enter animation
-      renderedConversation.push(
-        <motion.div
-          key={`${String(step.name)}-q`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut", delay: index * 0.1 }}
-        >
-          <ChatBubble side="assistant">
-            {typeof step.question === "string" ? (
-              step.question
-            ) : (
-              <BotMessage content={step.question} />
-            )}
-          </ChatBubble>
-        </motion.div>
-      );
+    // Question bubble (assistant)
+    renderedConversation.push(
+      <ChatBubble key={`${String(step.name)}-q`} side="assistant">
+        {typeof step.question === "string" ? (
+          step.question
+        ) : (
+          <BotMessage content={step.question} />
+        )}
+      </ChatBubble>
+    );
 
-      if (index < currentStep) {
-        // Already answered – show value bubble with enter animation
-        const answerValue = watchAll[step.name as keyof ChatFormValues];
-        renderedConversation.push(
-          <motion.div
-            key={`${String(step.name)}-a`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut", delay: 0.2 }}
-          >
-            <ChatBubble side="user">
-              <span className="textured-button bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm break-words">
-                {getAnswerLabel(step, answerValue)}
-              </span>
-            </ChatBubble>
-          </motion.div>
-        );
-      } else if (index === currentStep && !showSummary) {
-        // Current question – show interactive form using RHF field with enter animation
-        renderedConversation.push(
-          <motion.div
-            key={`${String(step.name)}-form`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut", delay: 0.3 }}
-          >
-            <ChatBubble side="user">
-              <FormField
-                control={form.control}
-                name={step.name as keyof ChatFormValues}
-                render={({ field }) => (
-                  <StepInput
-                    step={step}
-                    field={field}
-                    onContinue={() => handleContinue(index)}
-                  />
-                )}
+    if (index < currentStep) {
+      // Already answered – show value bubble
+      const answerValue = watchAll[step.name as keyof ChatFormValues];
+      renderedConversation.push(
+        <ChatBubble key={`${String(step.name)}-a`} side="user">
+          <span className="textured-button bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm break-words">
+            {getAnswerLabel(step, answerValue)}
+          </span>
+        </ChatBubble>
+      );
+    } else if (index === currentStep && !showSummary) {
+      // Current question – show interactive form using RHF field
+      renderedConversation.push(
+        <ChatBubble key={`${String(step.name)}-form`} side="user">
+          <FormField
+            control={form.control}
+            name={step.name as keyof ChatFormValues}
+            render={({ field }) => (
+              <StepInput
+                step={step}
+                field={field}
+                onContinue={() => handleContinue(index)}
               />
-            </ChatBubble>
-          </motion.div>
-        );
-      }
+            )}
+          />
+        </ChatBubble>
+      );
     }
   });
 
   /* ------------------------------ summary ------------------------------ */
   if (showSummary) {
     renderedConversation.push(
-      <motion.div
-        key="summary"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
-      >
-        <ChatBubble side="assistant">
-          <div className="flex flex-col gap-4">
-            <h3 className="font-semibold">Summary of your answers</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm">
-              {screeningSteps.map((step) => (
-                <li key={String(step.name)}>
-                  <span className="font-medium">
-                    {typeof step.question === "string" ? (
-                      step.question
-                    ) : (
-                      <BotMessage content={step.question} />
-                    )}
-                    :
-                  </span>{" "}
-                  {getAnswerLabel(
-                    step,
-                    watchAll[step.name as keyof ChatFormValues]
+      <ChatBubble key="summary" side="assistant">
+        <div className="flex flex-col gap-4">
+          <h3 className="font-semibold">Summary of your answers</h3>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            {screeningSteps.map((step) => (
+              <li key={String(step.name)}>
+                <span className="font-medium">
+                  {typeof step.question === "string" ? (
+                    step.question
+                  ) : (
+                    <BotMessage content={step.question} />
                   )}
-                </li>
-              ))}
-            </ul>
-            <Button type="submit" className="self-start">
-              Start chatting
-            </Button>
-          </div>
-        </ChatBubble>
-      </motion.div>
+                  :
+                </span>{" "}
+                {getAnswerLabel(
+                  step,
+                  watchAll[step.name as keyof ChatFormValues]
+                )}
+              </li>
+            ))}
+          </ul>
+          <Button type="submit" className="self-start">
+            Start chatting
+          </Button>
+        </div>
+      </ChatBubble>
     );
   }
 
@@ -438,7 +409,7 @@ function StepInput({
   const commonButton = (
     <RainbowButton
       type="button"
-      className="mt-4 rounded-3xl"
+      className="mt-4 rounded-xl"
       onClick={onContinue}
       disabled={isDisabled}
     >
