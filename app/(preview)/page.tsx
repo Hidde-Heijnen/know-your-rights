@@ -24,94 +24,37 @@ export default function Home() {
 
   const screeningComplete = screeningAnswers !== null;
 
-  // Ensure hydration is complete before showing conditional content
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  // Show loading state during hydration
-  if (!isHydrated) {
-    return (
-      <div className="flex justify-center items-center min-h-dvh">
-        <div className="text-zinc-500">Loading...</div>
-      </div>
-    );
-  }
-
-  const suggestedActions = [
-    {
-      title: "How many 'r's",
-      label: "are in the word strawberry?",
-      action: "How many 'r's are in the word strawberry?",
-    },
-  ];
+  // const suggestedActions = [
+  //   {
+  //     title: "How many 'r's",
+  //     label: "are in the word strawberry?",
+  //     action: "How many 'r's are in the word strawberry?",
+  //   },
+  // ];
 
   return (
-    <div className="flex flex-row justify-center pb-20 h-dvh bg-white dark:bg-zinc-900">
-      <div className="flex flex-col justify-between gap-4">
+    <div className="flex flex-row justify-center w-full">
+      <div className="flex flex-col justify-between gap-4 w-fit overflow-x-visible px-4">
         <div
           ref={messagesContainerRef}
-          className="flex flex-col gap-6 h-full w-dvw items-center overflow-y-scroll"
+          className="flex flex-col mt-24 h-full items-center overflow-y-scroll"
         >
-          {!screeningComplete && messages.length === 0 && (
-            <motion.div className="h-[350px] px-4 w-full md:w-[500px] md:px-0 pt-20">
-              <div className="border rounded-lg p-6 flex flex-col gap-4 text-zinc-500 text-sm dark:text-zinc-400 dark:border-zinc-700">
-                <p className="flex flex-row justify-center gap-4 items-center text-zinc-900 dark:text-zinc-50">
-                  <VercelIcon size={16} />
-                  <span>+</span>
-                  <MasonryIcon />
-                </p>
-                <p className="text-center">
-                  Multi-step generations with gpt-4o-mini (
-                  <Link
-                    className="text-blue-500 dark:text-blue-400"
-                    href="https://openai.com"
-                    target="_blank"
-                  >
-                    OpenAI
-                  </Link>
-                  ) and the{" "}
-                  <Link
-                    className="text-blue-500 dark:text-blue-400"
-                    href="https://sdk.vercel.ai"
-                    target="_blank"
-                  >
-                    AI SDK
-                  </Link>
-                </p>
-              </div>
-            </motion.div>
-          )}
+          <h1 className="text-2xl font-bold leading-none">Know Your Rights</h1>
+          <p className="text-zinc-500 dark:text-zinc-400">
+            You don&apos;t need to know the law to know your rights.
+          </p>
+          <ScreeningChat
+            onComplete={(values) => {
+              setScreeningAnswers(values);
+              append({
+                role: "system",
+                content: `User screening answers: ${JSON.stringify(values)}`,
+              });
+            }}
+          />
 
-          {screeningComplete && messages.length === 0 && (
-            <motion.div className="h-[350px] px-4 w-full md:w-[500px] md:px-0 pt-20">
-              <div className="border rounded-lg p-6 flex flex-col gap-4 text-zinc-500 text-sm dark:text-zinc-400 dark:border-zinc-700">
-                <p className="flex flex-row justify-center gap-4 items-center text-zinc-900 dark:text-zinc-50">
-                  <VercelIcon size={16} />
-                  <span>+</span>
-                  <MasonryIcon />
-                </p>
-                <p className="text-center">
-                  Multi-step generations with gpt-4o-mini (
-                  <Link
-                    className="text-blue-500 dark:text-blue-400"
-                    href="https://openai.com"
-                    target="_blank"
-                  >
-                    OpenAI
-                  </Link>
-                  ) and the{" "}
-                  <Link
-                    className="text-blue-500 dark:text-blue-400"
-                    href="https://sdk.vercel.ai"
-                    target="_blank"
-                  >
-                    AI SDK
-                  </Link>
-                </p>
+          <div ref={messagesEndRef} />
         </div>
-            </motion.div>
-          )}
 
         {messages.map((message, i) => {
           return (
@@ -124,48 +67,6 @@ export default function Home() {
             ></Message>
           );
         })}
-
-          <ScreeningChat
-            onComplete={(values) => {
-              setScreeningAnswers(values);
-              append({
-                role: "system",
-                content: `User screening answers: ${JSON.stringify(values)}`,
-              });
-            }}
-          />
-          <div ref={messagesEndRef} />
-        </div>
-
-        {screeningComplete && (
-          <div className="grid sm:grid-cols-1 gap-2 w-full px-4 md:px-0 mx-auto md:max-w-[500px] mb-4">
-            {messages.length === 0 &&
-              suggestedActions.map((suggestedAction, index) => (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 * index }}
-                  key={index}
-                  className={index > 1 ? "hidden sm:block" : "block"}
-                >
-                  <button
-                    onClick={async () => {
-                      append({
-                        role: "user",
-                        content: suggestedAction.action,
-                      });
-                    }}
-                    className="w-full text-left border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-300 rounded-lg p-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex flex-col"
-                  >
-                    <span className="font-medium">{suggestedAction.title}</span>
-                    <span className="text-zinc-500 dark:text-zinc-400">
-                      {suggestedAction.label}
-                    </span>
-                  </button>
-                </motion.div>
-              ))}
-          </div>
-        )}
 
         {screeningComplete && (
           <form
