@@ -164,7 +164,7 @@ function ChatBubble({
 
       <div
         className={`flex flex-col gap-1 max-w-full ${
-          isAssistant ? "text-zinc-800 dark:text-zinc-300" : ""
+          isAssistant ? "text-zinc-800 dark:text-zinc-300" : "items-end w-full"
         }`}
       >
         {children}
@@ -327,6 +327,7 @@ function StepInput({
         onValueChange={setLocalValue}
         options={step.options}
         legend=""
+        className="min-w-32"
       />
     );
   }
