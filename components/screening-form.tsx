@@ -16,6 +16,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar-rac";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import {
+  fromDate,
+  toCalendarDate,
+  getLocalTimeZone,
+} from "@internationalized/date";
 import { RadioCards } from "@/components/radio-cards";
 
 /* -------------------------------------------------------------------------- */
@@ -25,8 +39,8 @@ const ScreeningSchema = z.object({
   purchase_uk: z.enum(["yes", "no"]),
   acting_personal: z.enum(["yes", "no"]),
   seller_trader: z.enum(["yes", "no"]),
-  receive_date: z.string().min(1, {
-    message: "Please select a date.",
+  receive_date: z.date({
+    required_error: "Please select a date.",
   }),
   contract_main: z.enum(["goods", "digital", "service", "mix"]),
   contract_type: z.enum(["one_off", "hire", "hire_purchase", "transfer"]),
@@ -99,7 +113,7 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
       purchase_uk: "yes",
       acting_personal: "yes",
       seller_trader: "yes",
-      receive_date: "",
+      receive_date: undefined,
       contract_main: "goods",
       contract_type: "one_off",
       auction: "no",
@@ -191,13 +205,46 @@ export function ScreeningForm({ onComplete }: ScreeningFormProps) {
                 When did you receive (or were due to receive) the goods, digital
                 content or service?
               </FormLabel>
-              <FormControl>
-                <Input
-                  type="date"
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              </FormControl>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                      <CalendarIcon />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    value={
+                      field.value
+                        ? fromDate(field.value, getLocalTimeZone())
+                        : null
+                    }
+                    onChange={(date) =>
+                      field.onChange(
+                        date ? date.toDate(getLocalTimeZone()) : null
+                      )
+                    }
+                    isDateUnavailable={(date) => {
+                      const jsDate = date.toDate(getLocalTimeZone());
+                      return (
+                        jsDate > new Date() || jsDate < new Date("1900-01-01")
+                      );
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
             </FormItem>
           )}
         />
