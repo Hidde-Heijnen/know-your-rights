@@ -85,7 +85,7 @@ const RadioCards = React.forwardRef<
               <Label
                 key={option.value}
                 className={cn(
-                  "has-data-[state=checked]:textured-button text-nowrap relative flex h-8 px-3 w-fit cursor-pointer flex-col items-center justify-center gap-3 border border-input bg-accent text-center font-medium text-sm outline-none transition-[color,box-shadow] rounded-md focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 has-data-[state=checked]:z-10 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-primary/90 has-data-[state=checked]:text-primary-foreground has-data-disabled:opacity-50",
+                  "textured-button text-nowrap relative flex h-8 px-3 w-fit cursor-pointer flex-col items-center justify-center gap-3 border border-input bg-accent text-center font-medium text-sm outline-none transition-[color,box-shadow] rounded-md focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 has-data-[state=checked]:z-10 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-primary/90 has-data-[state=checked]:text-primary-foreground has-data-disabled:opacity-50",
                   direction === "row" && "flex-1",
                   labelClassName
                 )}
