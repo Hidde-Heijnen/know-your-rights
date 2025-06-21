@@ -34,7 +34,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-row justify-center w-full">
-      <div className="flex flex-col justify-between gap-4 max-w-[1000px]">
+      <div className="flex flex-col justify-between gap-4 max-w-[600px]">
         <div
           ref={messagesContainerRef}
           className="flex flex-col mt-24 h-full items-center overflow-y-scroll"

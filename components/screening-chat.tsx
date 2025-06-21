@@ -23,15 +23,12 @@ import { fromDate, getLocalTimeZone } from "@internationalized/date";
 /* -------------------------------------------------------------------------- */
 
 const ScreeningSchema = z.object({
-  purchase_uk: z.enum(["yes", "no"]).optional(),
-  acting_personal: z.enum(["yes", "no"]).optional(),
-  seller_trader: z.enum(["yes", "no"]).optional(),
+  eligibility_check: z.enum(["yes", "no"]).optional(),
   receive_date: z.date().optional(),
   contract_main: z.enum(["goods", "digital", "service", "mix"]).optional(),
   contract_type: z
     .enum(["one_off", "hire", "hire_purchase", "transfer"])
     .optional(),
-  auction: z.enum(["yes", "no"]).optional(),
   purchase_method: z.enum(["in_person", "online", "off_premises"]).optional(),
   issue_description: z.string().optional(),
 });
@@ -97,20 +94,9 @@ type Step = BaseStep;
 
 const screeningSteps: Step[] = [
   {
-    name: "purchase_uk",
-    question: "Did the purchase or contract take place in the United Kingdom?",
-    type: "radio",
-    options: createOptionsList(["yes", "no"], "yesNo"),
-  },
-  {
-    name: "acting_personal",
-    question: "Are you acting mainly for personal, non-business purposes?",
-    type: "radio",
-    options: createOptionsList(["yes", "no"], "yesNo"),
-  },
-  {
-    name: "seller_trader",
-    question: "Is the seller or supplier acting for business purposes?",
+    name: "eligibility_check",
+    question:
+      "Please confirm: Did you purchase something in the UK, for personal (non-business) use, from a business or public body (not a private individual), and it was NOT bought at a public auction you could attend in person?",
     type: "radio",
     options: createOptionsList(["yes", "no"], "yesNo"),
   },
@@ -137,13 +123,6 @@ const screeningSteps: Step[] = [
       ["transfer", "hire_purchase", "hire", "one_off"],
       "contractType"
     ),
-  },
-  {
-    name: "auction",
-    question:
-      "Was the item bought at a public auction you could attend in person?",
-    type: "radio",
-    options: createOptionsList(["yes", "no"], "yesNo"),
   },
   {
     name: "purchase_method",
