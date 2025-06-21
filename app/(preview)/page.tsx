@@ -41,7 +41,7 @@ export default function Home() {
         >
           <h1 className="text-2xl font-bold leading-none">Know Your Rights</h1>
           <p className="text-zinc-500 dark:text-zinc-400">
-            Answer a few questions to get started.
+            You don't need to know the law to know your rights.
           </p>
           <ScreeningChat
             onComplete={(values) => {
